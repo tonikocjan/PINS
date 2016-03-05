@@ -1,1 +1,6 @@
-x = 10; # to je komentar
+# @return x squared
+fun foo(integer x) {
+	return x * x;
+}
+if (foo(10) > 30) then
+	print('')

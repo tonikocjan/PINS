@@ -189,6 +189,9 @@ public class LexAn {
 								"String literal is not properly closed by a single-quote.");
 						break;
 					}
+					/**
+					 * Update counters.
+					 */
 					startRow++;
 					endRow++;
 					startCol = 1;
@@ -203,7 +206,9 @@ public class LexAn {
 			 */
 			else if (nxtCh == '#') {
 				comment = true;
-				return returnSymbol();
+				Symbol s = returnSymbol();
+				if (s == null) continue;
+				return s;
 			}
 			
 			/**
@@ -212,8 +217,10 @@ public class LexAn {
 			if (comment) continue;
 			
 			/**
-			 * Entering state-machine.
-			 * 
+			 * Entering state-machine. --------------------------------------------------
+			 */
+			
+			/** 
 			 * If not in string state, 
 			 * first check if character is an operator (',', ';' .... )
 			 */
@@ -236,8 +243,8 @@ public class LexAn {
 			 * If this is first character, we can determine whether
 			 * it will be a number, string or identifier.
 			 * If current charcter is single quote, this is a string. 
-			 * If current character is '0' it might be either a hexadecimal or an octal number.
-			 * Otherwise it is an identifier.
+			 * If current character is numeric, it is a number.
+			 * Otherwise an identifier.
 			 */
 			if (word.length() == 1) {
 				if (isNumeric(nxtCh))
@@ -258,12 +265,21 @@ public class LexAn {
 					 * Otherwise return lexal-error.
 					 */
 					if (previous == '0' && word.length() == 2) {
+						/**
+						 * Enter hexadecimal state.
+						 */
 						if (nxtCh == 'x' || nxtCh == 'X') {
 							hexadecimal = true;
 							continue;
 						}
+						/**
+						 * Enter octal state.
+						 */
 						else if (isOctal(nxtCh))
 							octal = true;
+						/**
+						 * Return lexal-error ilegal char.
+						 */
 						else {
 							Position pos = new Position(startRow, startCol, endRow, endCol);
 							Report.report(pos, "Invalid token ['" + (char)nxtCh + "']. Expected 'x' or 0-7!");
@@ -297,7 +313,7 @@ public class LexAn {
 				}
 				
 				/**
-				 * If in string state, read characters until single-quote.
+				 * If in string state, read characters until a single-quote.
 				 * When found, also check next character, because double single-quote 
 				 * is part of the word.
 				 */
@@ -324,73 +340,31 @@ public class LexAn {
 	 * Check if character is a single-character operator.
 	 */
 	private Symbol isOperator(int ch) {
-		if (ch == '+')
-			return new Symbol(Token.ADD, "ADD", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '-')
-			return new Symbol(Token.SUB, "SUB", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '*')
-			return new Symbol(Token.MUL, "MUL", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '/')
-			return new Symbol(Token.DIV, "DIV", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '%')
-			return new Symbol(Token.MOD, "MOD", new Position(startRow,
-					startCol, endRow, endCol));
+		if (ch == '+') return new Symbol(Token.ADD, "+", startRow, startCol, endRow, endCol);
+		if (ch == '-') return new Symbol(Token.SUB, "-", startRow, startCol, endRow, endCol);
+		if (ch == '*') return new Symbol(Token.MUL, "*", startRow, startCol, endRow, endCol);
+		if (ch == '/') return new Symbol(Token.DIV, "/", startRow, startCol, endRow, endCol);
+		if (ch == '%') return new Symbol(Token.MOD, "%", startRow, startCol, endRow, endCol);
 
-		if (ch == '&')
-			return new Symbol(Token.AND, "AND", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '|')
-			return new Symbol(Token.IOR, "IOR", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '!')
-			return new Symbol(Token.NOT, "NOT", new Position(startRow,
-					startCol, endRow, endCol));
+		if (ch == '&') return new Symbol(Token.AND, "&", startRow, startCol, endRow, endCol);
+		if (ch == '|') return new Symbol(Token.IOR, "|", startRow, startCol, endRow, endCol);
+		if (ch == '!') return new Symbol(Token.NOT, "!", startRow, startCol, endRow, endCol);
 
-		if (ch == '(')
-			return new Symbol(Token.LPARENT, "LPARENT", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == ')')
-			return new Symbol(Token.RPARENT, "RPARENT", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '{')
-			return new Symbol(Token.LBRACE, "LBRACE", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '}')
-			return new Symbol(Token.RBRACE, "RBRACE", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '[')
-			return new Symbol(Token.LBRACKET, "LBRACKET", new Position(
-					startRow, startCol, endRow, endCol));
-		if (ch == ']')
-			return new Symbol(Token.RBRACKET, "RBRACKET", new Position(
-					startRow, startCol, endRow, endCol));
+		if (ch == '(') return new Symbol(Token.LPARENT, "(", startRow, startCol, endRow, endCol);
+		if (ch == ')') return new Symbol(Token.RPARENT, ")", startRow, startCol, endRow, endCol);
+		if (ch == '{') return new Symbol(Token.LBRACE, "{", startRow, startCol, endRow, endCol);
+		if (ch == '}') return new Symbol(Token.RBRACE, "}", startRow, startCol, endRow, endCol);
+		if (ch == '[') return new Symbol(Token.LBRACKET, "[", startRow, startCol, endRow, endCol);
+		if (ch == ']') return new Symbol(Token.RBRACKET, "]", startRow, startCol, endRow, endCol);
 
-		if (ch == '<')
-			return new Symbol(Token.LTH, "LTH", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '>')
-			return new Symbol(Token.GTH, "GTH", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == '=')
-			return new Symbol(Token.ASSIGN, "ASSIGN", new Position(startRow,
-					startCol, endRow, endCol));
+		if (ch == '<') return new Symbol(Token.LTH, "LTH", startRow, startCol, endRow, endCol);
+		if (ch == '>') return new Symbol(Token.GTH, "GTH", startRow, startCol, endRow, endCol);
+		if (ch == '=') return new Symbol(Token.ASSIGN, "ASSIGN", startRow, startCol, endRow, endCol);
 
-		if (ch == '.')
-			return new Symbol(Token.DOT, "DOT", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == ':')
-			return new Symbol(Token.COLON, "COLON", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == ';')
-			return new Symbol(Token.SEMIC, "SEMIC", new Position(startRow,
-					startCol, endRow, endCol));
-		if (ch == ',')
-			return new Symbol(Token.COMMA, "COMMA", new Position(startRow,
-					startCol, endRow, endCol));
+		if (ch == '.') return new Symbol(Token.DOT, "DOT", startRow, startCol, endRow, endCol);
+		if (ch == ':') return new Symbol(Token.COLON, "COLON", startRow, startCol, endRow, endCol);
+		if (ch == ';') return new Symbol(Token.SEMIC, "SEMIC", startRow, startCol, endRow, endCol);
+		if (ch == ',') return new Symbol(Token.COMMA, "COMMA", startRow, startCol, endRow, endCol);
 
 		return null;
 	}
@@ -399,18 +373,14 @@ public class LexAn {
 	 * Check for double-character operators.
 	 */
 	private Symbol isOperator2(int ch1, int ch2) {
-		if (ch1 == '=' && ch2 == '=')
-			return new Symbol(Token.EQU, "EQU", new Position(startRow,
-					startCol, endRow, endCol));
+		if (ch1 == '=' && ch2 == '=') 
+			return new Symbol(Token.EQU, "EQU", startRow, startCol, endRow, endCol);
 		if (ch1 == '!' && ch2 == '=')
-			return new Symbol(Token.NEQ, "NEQ", new Position(startRow,
-					startCol, endRow, endCol));
+			return new Symbol(Token.NEQ, "NEQ", startRow, startCol, endRow, endCol);
 		if (ch1 == '>' && ch2 == '=')
-			return new Symbol(Token.GEQ, "GEQ", new Position(startRow,
-					startCol, endRow, endCol));
+			return new Symbol(Token.GEQ, "GEQ", startRow, startCol, endRow, endCol);
 		if (ch1 == '<' && ch2 == '=')
-			return new Symbol(Token.LEQ, "GEQ", new Position(startRow,
-					startCol, endRow, endCol));
+			return new Symbol(Token.LEQ, "GEQ", startRow, startCol, endRow, endCol);
 		return null;
 	}
 
@@ -442,13 +412,12 @@ public class LexAn {
 	private Symbol returnSymbol() {
 		if (word.length() == 0) return null;
 		
-		Position pos = new Position(startRow, startCol, endRow, endCol);
 		if (numeric)
-			return new Symbol(Token.INT_CONST, word.toString(), pos);
+			return new Symbol(Token.INT_CONST, word.toString(), startRow, startCol, endRow, endCol);
 		if (string)
-			return new Symbol(Token.STR_CONST, word.toString(), pos);
+			return new Symbol(Token.STR_CONST, word.toString(), startRow, startCol, endRow, endCol);
 		if (logical)
-			return new Symbol(Token.LOG_CONST, word.toString(), pos);
+			return new Symbol(Token.LOG_CONST, word.toString(), startRow, startCol, endRow, endCol);
 		
 		/**
 		 * If in identifier state, check if word is
@@ -457,10 +426,13 @@ public class LexAn {
 		 */
 		if (identifier) {
 			if (keywordsMap.containsKey(word.toString()))
-				return new Symbol(keywordsMap.get(word.toString()), word.toString(), pos);
+				return new Symbol(keywordsMap.get(word.toString()), 
+						word.toString(), startRow, startCol, endRow, endCol);
 			else if (word.toString().equals("true") || word.toString().equals("false"))
-				return new Symbol(Token.LOG_CONST, word.toString(), pos);
-			return new Symbol(Token.IDENTIFIER, word.toString(), pos);
+				return new Symbol(Token.LOG_CONST, 
+						word.toString(), startRow, startCol, endRow, endCol);
+			return new Symbol(Token.IDENTIFIER, 
+					word.toString(), startRow, startCol, endRow, endCol);
 		}
 		return null;
 	}

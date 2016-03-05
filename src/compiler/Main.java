@@ -19,7 +19,7 @@ public class Main {
 	private static String execPhase = "synan";
 
 	/** Doloca faze, v katerih se bodo izpisali vmesni rezultati. */
-	private static String dumpPhases = "lexan";
+	private static String dumpPhases = "";
 
 	/**
 	 * Metoda, ki izvede celotni proces prevajanja.
