@@ -19,7 +19,7 @@ public class Main {
 	private static String execPhase = "synan";
 
 	/** Doloca faze, v katerih se bodo izpisali vmesni rezultati. */
-	private static String dumpPhases = "";
+	private static String dumpPhases = "lexan";
 
 	/**
 	 * Metoda, ki izvede celotni proces prevajanja.
@@ -77,8 +77,10 @@ public class Main {
 			}
 			
 			// Neznana faza prevajanja.
-			if (! execPhase.equals(""))
+			if (! execPhase.equals("")) {
 				Report.warning("Unknown compiler phase specified.");
+				System.exit(10);
+			}
 		}
 
 		// Zapiranje datoteke z vmesnimi rezultati.

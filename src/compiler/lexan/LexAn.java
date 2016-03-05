@@ -65,6 +65,8 @@ public class LexAn {
 	private boolean string = false;
 	private boolean logical = false;
 	private boolean identifier = false;
+	
+	private boolean comment = false;
 
 	private boolean dontRead = false;
 
@@ -117,6 +119,9 @@ public class LexAn {
 			startCol = endCol;
 			startRow = endRow;
 
+			if (s == null) s = new Symbol(Token.EOF, "", null);
+			dump(s);
+			
 			return s;
 
 		} catch (IOException e) {
@@ -127,15 +132,16 @@ public class LexAn {
 	}
 
 	private Symbol parseSymbol() throws IOException {
-		for (; true; ) {
+		while (true) {
 			if (dontRead) {
 				dontRead = false;
 				// if previous character was EOF, return EOF token
 				if (previous == -1)
 					return new Symbol(Token.EOF, "EOF", new Position(endRow, endCol));
+				
 				/**
 				 *  If previous character was an operator,
-				 *  we also need to check next character ('==', '!=' ...)
+				 *  also check next character ('==', '!=' ...)
 				 */
 				Symbol op = isOperator(previous);
 				if (op != null) {
@@ -165,17 +171,20 @@ public class LexAn {
 			/**
 			 * Skip whitespaces.
 			 */
-			if (nxtCh == 32 || nxtCh == 9 || nxtCh == 10 || nxtCh == 13) {
+			else if (nxtCh == 32 || nxtCh == 9 || nxtCh == 10 || nxtCh == 13) {
 				Symbol s = returnSymbol();
 				
 				/**
-				 * If we are in string state and stumble upon newline, 
+				 * If string state and stumble upon newline, 
 				 * check if last character of the word is single quote. 
 				 * If it isn't, return lexal-error.
+				 * 
+				 * Also, exit comment state.
 				 */
-				if (nxtCh == 10 || nxtCh == 13) {
+				if (nxtCh == 10) {
+					comment = false;
+					
 					if (string && word.charAt(word.length() - 1) != '\'') {
-						
 						Report.report(new Position(startRow, startCol, endRow, endCol), 
 								"String literal is not properly closed by a single-quote.");
 						break;
@@ -189,12 +198,24 @@ public class LexAn {
 				if (s != null) return s;
 				continue;
 			}
+			/**
+			 * If character is '#', enter comment state.
+			 */
+			else if (nxtCh == '#') {
+				comment = true;
+				return returnSymbol();
+			}
+			
+			/**
+			 * Skip characters while in comment state.
+			 */
+			if (comment) continue;
 			
 			/**
 			 * Entering state-machine.
 			 * 
-			 * If we are not in 'string' state, 
-			 * we first check if character is an operator (',', ';' .... )
+			 * If not in string state, 
+			 * first check if character is an operator (',', ';' .... )
 			 */
 			if (!string) {
 				Symbol operator = isOperator(nxtCh);
@@ -213,7 +234,7 @@ public class LexAn {
 
 			/**
 			 * If this is first character, we can determine whether
-			 * this will be a number, string or identifier.
+			 * it will be a number, string or identifier.
 			 * If current charcter is single quote, this is a string. 
 			 * If current character is '0' it might be either a hexadecimal or an octal number.
 			 * Otherwise it is an identifier.
@@ -274,10 +295,11 @@ public class LexAn {
 						break;
 					}
 				}
+				
 				/**
-				 * If state is string, we read characters until we find single quote.
-				 * When we find it, we also need to check next character, because
-				 * double single quote is part of string.
+				 * If in string state, read characters until single-quote.
+				 * When found, also check next character, because double single-quote 
+				 * is part of the word.
 				 */
 				else if (string) {
 					if (nxtCh == '\'') {
@@ -299,7 +321,7 @@ public class LexAn {
 	}
 	
 	/**
-	 * Check if character is single-character operator.
+	 * Check if character is a single-character operator.
 	 */
 	private Symbol isOperator(int ch) {
 		if (ch == '+')
@@ -372,6 +394,7 @@ public class LexAn {
 
 		return null;
 	}
+	
 	/**
 	 * Check for double-character operators.
 	 */
@@ -389,10 +412,6 @@ public class LexAn {
 			return new Symbol(Token.LEQ, "GEQ", new Position(startRow,
 					startCol, endRow, endCol));
 		return null;
-	}
-
-	private boolean isAlphabetical(int ch) {
-		return (ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z');
 	}
 
 	private boolean isNumeric(int ch) {
@@ -432,13 +451,15 @@ public class LexAn {
 			return new Symbol(Token.LOG_CONST, word.toString(), pos);
 		
 		/**
-		 * If returning IDENTIFIER, check if word is
-		 * - keyword,
+		 * If in identifier state, check if word is
+		 * - keyword or
 		 * - logical literal ("true", "false")
 		 */
 		if (identifier) {
 			if (keywordsMap.containsKey(word.toString()))
 				return new Symbol(keywordsMap.get(word.toString()), word.toString(), pos);
+			else if (word.toString().equals("true") || word.toString().equals("false"))
+				return new Symbol(Token.LOG_CONST, word.toString(), pos);
 			return new Symbol(Token.IDENTIFIER, word.toString(), pos);
 		}
 		return null;
