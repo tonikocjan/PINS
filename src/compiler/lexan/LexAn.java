@@ -32,7 +32,7 @@ public class LexAn {
 	/**
 	 * Map containing all reserved keywords.
 	 */
-	private static final String[] keywords = new String[]{"logical", "integer", "string","arr", "else", "for", "fun", "if", "then", "typ", "var", "where", "while"};
+	private static final String[] keywords = new String[]{"logical", "integer", "string", "arr", "else", "for", "fun", "if", "then", "typ", "var", "where", "while"};
 	private static Map<String, Integer> keywordsMap = null;
 
 	/**
@@ -208,11 +208,24 @@ public class LexAn {
 					if (s != null) return s;
 				}
 				
+				/**
+				 * Update counters.
+				 */
+				if (word.length() == 0) {
+					if (nxtCh == 32) startCol++;
+					if (nxtCh == 9) startCol += 4;
+				}
+				else {
+					if (nxtCh == 32) endCol++;
+					if (nxtCh == 9) endCol += 4;
+				}
+				
 				if (s != null && !string) return s;
 				if (!string) continue;
 			}
+			
 			/**
-			 * If character is '#', enter comment state (if not in string state).
+			 * If character is '#' and not in string state, enter comment state.
 			 */
 			else if (nxtCh == '#' && !string) {
 				comment = true;
@@ -240,8 +253,10 @@ public class LexAn {
 				if (operator != null) {
 					dontRead = true;
 					previous = nxtCh;
-					if (word.length() > 0)
-						return returnSymbol();
+					
+					Symbol s = returnSymbol();
+					if (s != null) return s;
+					
 					continue;
 				}
 			}
@@ -249,9 +264,9 @@ public class LexAn {
 			word.append((char)nxtCh);
 			
 			/**
-			 * If this is first character, we can determine whether
+			 * If this is the first character, we can determine whether
 			 * it will be a number, string or identifier.
-			 * If current charcter is a single quote, it is a string. 
+			 * If current character is a single quote, it is a string. 
 			 * If current character is numeric, it is a number.
 			 * Otherwise an identifier.
 			 */
@@ -268,6 +283,19 @@ public class LexAn {
 				 * If state is numeric.
 				 */
 				if (numeric) {
+					/**
+					 * If current character is single-quote, exit numeric and enter
+					 * string state.
+					 */
+					if (nxtCh == '\'') {
+						dontRead = true;
+						
+						Symbol s = returnSymbol();
+						if (s != null) return s;
+						
+						continue;
+					}
+					
 					/**
 					 * If this is second character and previous character was '0',
 					 * this must either be 'x' or char in range '0' - '7'.
