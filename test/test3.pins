@@ -3,5 +3,4 @@ while (x < 20) {
 	x = x + 1;
 }
 logical bool = false;
-bool =# to je komentar
-'string'
+bool = #false;

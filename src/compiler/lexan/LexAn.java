@@ -3,11 +3,8 @@ package compiler.lexan;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import compiler.*;
 
@@ -48,7 +45,7 @@ public class LexAn {
 	 * Position.
 	 */
 	private int startCol = 1, startRow = 1;
-	private int endCol = 1, endRow = 1;
+	private int endCol = 0, endRow = 1;
 
 	/**
 	 * State-machine flags.
@@ -63,6 +60,8 @@ public class LexAn {
 	private boolean octal = false;
 
 	private boolean string = false;
+	private boolean stringClosed = false;
+	
 	private boolean logical = false;
 	private boolean identifier = false;
 	
@@ -103,7 +102,7 @@ public class LexAn {
 
 	/**
 	 * Vrne naslednji simbol iz izvorne datoteke. Preden vrne simbol, ga izpise
-	 * na datoteko z vmesnimi rezultati.
+	 * v datoteko z vmesnimi rezultati.
 	 * 
 	 * @return Naslednji simbol iz izvorne datoteke.
 	 */
@@ -164,47 +163,58 @@ public class LexAn {
 			// if EOF
 			if (nxtCh == -1) {
 				dontRead = true;
-				previous = -1;
+				previous = -1;					
+				
+				/**
+				 * If in string state and string not properly closed,
+				 * return lexal-error.
+				 */
+				if (string && !stringClosed) {
+					Report.report(new Position(startRow, startCol, endRow, endCol), 
+							"String literal is not properly closed by a single-quote.");
+					break;
+				}
+				
 				return returnSymbol();
 			}
 			
 			/**
-			 * Skip whitespaces.
+			 * Skip whitespaces (if not in string state).
 			 */
 			else if (nxtCh == 32 || nxtCh == 9 || nxtCh == 10 || nxtCh == 13) {
 				Symbol s = returnSymbol();
 				
-				/**
-				 * If string state and stumble upon newline, 
-				 * check if last character of the word is single quote. 
-				 * If it isn't, return lexal-error.
-				 * 
-				 * Also, exit comment state.
-				 */
 				if (nxtCh == 10) {
+					// exit comment state
 					comment = false;
 					
-					if (string && word.charAt(word.length() - 1) != '\'') {
+					/**
+					 * If in string state and string not properly closed,
+					 * return lexal-error.
+					 */
+					if (string && !stringClosed) {
 						Report.report(new Position(startRow, startCol, endRow, endCol), 
 								"String literal is not properly closed by a single-quote.");
 						break;
 					}
+					
 					/**
 					 * Update counters.
 					 */
 					startRow++;
 					endRow++;
 					startCol = 1;
-					endCol = 1;
+					endCol = 0;
+					if (s != null) return s;
 				}
 				
-				if (s != null) return s;
-				continue;
+				if (s != null && !string) return s;
+				if (!string) continue;
 			}
 			/**
-			 * If character is '#', enter comment state.
+			 * If character is '#', enter comment state (if not in string state).
 			 */
-			else if (nxtCh == '#') {
+			else if (nxtCh == '#' && !string) {
 				comment = true;
 				Symbol s = returnSymbol();
 				if (s == null) continue;
@@ -226,7 +236,7 @@ public class LexAn {
 			 */
 			if (!string) {
 				Symbol operator = isOperator(nxtCh);
-				// if this is operator, return currently processed word and save character
+				// if this is operator, return currently processed word and save the character
 				if (operator != null) {
 					dontRead = true;
 					previous = nxtCh;
@@ -235,14 +245,13 @@ public class LexAn {
 					continue;
 				}
 			}
-			
 			// append current character
 			word.append((char)nxtCh);
-
+			
 			/**
 			 * If this is first character, we can determine whether
 			 * it will be a number, string or identifier.
-			 * If current charcter is single quote, this is a string. 
+			 * If current charcter is a single quote, it is a string. 
 			 * If current character is numeric, it is a number.
 			 * Otherwise an identifier.
 			 */
@@ -314,20 +323,40 @@ public class LexAn {
 				
 				/**
 				 * If in string state, read characters until a single-quote.
-				 * When found, also check next character, because double single-quote 
-				 * is part of the word.
+				 * When found, also check the next character, because double single-quote 
+				 * is a single-quote part of the string.
 				 */
 				else if (string) {
-					if (nxtCh == '\'') {
-						previous = '\'';
-						nxtCh = file.read();
-						if (nxtCh == '\'')
-							word.append((char)nxtCh);
-						// string ended
-						else {
-							dontRead = true;
-							return returnSymbol();
+					if (nxtCh >= 32 && nxtCh < 126) {
+						if (nxtCh == '\'') {
+							previous = '\'';
+							stringClosed = true;
+
+							nxtCh = file.read();
+							endCol++;
+							
+							if (nxtCh != '\'') {
+								dontRead = true;
+								return returnSymbol();
+							}
+							else 
+								stringClosed = false;
 						}
+					}
+					else {
+						Report.report(new Position(startRow, startCol, endRow, endCol),
+								"Invalid character in string constant!");
+						break;
+					}
+				}
+				/**
+				 * Allow numbers, letters and '_' to be in identifier.
+				 */
+				else if (identifier) {
+					if (!isLegal(nxtCh)) {
+						Report.report(new Position(startRow, startCol, endRow, endCol),
+								"Ilegal character ['" + (char)nxtCh + "'] in identifier!");
+						break;
 					}
 				}
 			}
@@ -357,14 +386,14 @@ public class LexAn {
 		if (ch == '[') return new Symbol(Token.LBRACKET, "[", startRow, startCol, endRow, endCol);
 		if (ch == ']') return new Symbol(Token.RBRACKET, "]", startRow, startCol, endRow, endCol);
 
-		if (ch == '<') return new Symbol(Token.LTH, "LTH", startRow, startCol, endRow, endCol);
-		if (ch == '>') return new Symbol(Token.GTH, "GTH", startRow, startCol, endRow, endCol);
-		if (ch == '=') return new Symbol(Token.ASSIGN, "ASSIGN", startRow, startCol, endRow, endCol);
+		if (ch == '<') return new Symbol(Token.LTH, "<", startRow, startCol, endRow, endCol);
+		if (ch == '>') return new Symbol(Token.GTH, ">", startRow, startCol, endRow, endCol);
+		if (ch == '=') return new Symbol(Token.ASSIGN, "=", startRow, startCol, endRow, endCol);
 
-		if (ch == '.') return new Symbol(Token.DOT, "DOT", startRow, startCol, endRow, endCol);
-		if (ch == ':') return new Symbol(Token.COLON, "COLON", startRow, startCol, endRow, endCol);
-		if (ch == ';') return new Symbol(Token.SEMIC, "SEMIC", startRow, startCol, endRow, endCol);
-		if (ch == ',') return new Symbol(Token.COMMA, "COMMA", startRow, startCol, endRow, endCol);
+		if (ch == '.') return new Symbol(Token.DOT, ",", startRow, startCol, endRow, endCol);
+		if (ch == ':') return new Symbol(Token.COLON, ":", startRow, startCol, endRow, endCol);
+		if (ch == ';') return new Symbol(Token.SEMIC, ";", startRow, startCol, endRow, endCol);
+		if (ch == ',') return new Symbol(Token.COMMA, ",", startRow, startCol, endRow, endCol);
 
 		return null;
 	}
@@ -380,8 +409,13 @@ public class LexAn {
 		if (ch1 == '>' && ch2 == '=')
 			return new Symbol(Token.GEQ, "GEQ", startRow, startCol, endRow, endCol);
 		if (ch1 == '<' && ch2 == '=')
-			return new Symbol(Token.LEQ, "GEQ", startRow, startCol, endRow, endCol);
+			return new Symbol(Token.LEQ, "LEQ", startRow, startCol, endRow, endCol);
 		return null;
+	}
+	
+	private boolean isLegal(int ch) {
+		return (isNumeric(nxtCh) || (ch >= 'a' && ch <= 'z') ||
+				(ch >= 'A' && ch <= 'Z') || ch == '_');
 	}
 
 	private boolean isNumeric(int ch) {
@@ -389,8 +423,7 @@ public class LexAn {
 	}
 
 	private boolean isHexadecimal(int ch) {
-		return isNumeric(ch)
-				|| (ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F');
+		return isNumeric(ch) || (ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F');
 	}
 
 	private boolean isOctal(int ch) {
@@ -403,6 +436,7 @@ public class LexAn {
 		octal = false;
 		string = false;
 		logical = false;
+		stringClosed = false;
 		word = new StringBuilder();
 	}
 
