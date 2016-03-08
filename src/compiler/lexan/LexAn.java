@@ -38,7 +38,6 @@ public class LexAn {
 	/**
 	 * Previous, current caracter.
 	 */
-	private int previous = -1;
 	private int nxtCh = -1;
 
 	/**
@@ -56,8 +55,6 @@ public class LexAn {
 	 * - string: sequence of characters inside single-quotes
 	 */
 	private boolean numeric = false;
-	private boolean hexadecimal = false;
-	private boolean octal = false;
 
 	private boolean string = false;
 	private boolean stringClosed = false;
@@ -134,100 +131,101 @@ public class LexAn {
 		while (true) {
 			if (dontRead) {
 				dontRead = false;
-				// if previous character was EOF, return EOF token
-				if (previous == -1)
+				
+				// if EOF return EOF token
+				if (nxtCh == -1)
 					return new Symbol(Token.EOF, "EOF", new Position(endRow, endCol));
 				
 				/**
 				 *  If previous character was an operator,
 				 *  also check next character ('==', '!=' ...)
 				 */
-				Symbol op = isOperator(previous);
+				Symbol op = isOperator(nxtCh);
 				if (op != null) {
 					// read next character
-					nxtCh = file.read();
-					Symbol op2 = isOperator2(previous, nxtCh);
-					previous = '\0';
+					int tmp = file.read();
+					Symbol op2 = isOperator2(nxtCh, tmp);
+					
+					nxtCh = tmp;
 					if (op2 != null) return op2;
-					previous = nxtCh;
+					
 					dontRead = true;
 					return op;
 				}
 			}
 			else {
-				previous = nxtCh;
 				nxtCh = file.read();
 				endCol++;
 			}
 			
-			// if EOF
+			/**
+			 * If EOF, return symbol and exit.
+			 */
 			if (nxtCh == -1) {
 				dontRead = true;
-				previous = -1;					
 				
 				/**
-				 * If in string state and string not properly closed,
-				 * return lexal-error.
+				 * If in string state and string not closed,
+				 * report lexal error.
 				 */
 				if (string && !stringClosed) {
-					Report.report(new Position(startRow, startCol, endRow, endCol), 
-							"String literal is not properly closed by a single-quote.");
-					break;
+					Report.report(new Position(startRow, startCol, endRow, endCol),
+							"String literal not properly closed!");
+					return null;
 				}
 				
 				return returnSymbol();
 			}
 			
 			/**
-			 * Skip whitespaces (if not in string state).
+			 * If newline, exit comment state and return symbol.
 			 */
-			else if (nxtCh == 32 || nxtCh == 9 || nxtCh == 10 || nxtCh == 13) {
+			if (nxtCh == 10) {				
+				/**
+				 * If in string state and string not closed,
+				 * report lexal error.
+				 */
+				if (string && !stringClosed) {
+					Report.report(new Position(startRow, startCol, endRow, endCol),
+							"String literal not properly closed!");
+					return null;
+				}
+				
+				comment = false;
 				Symbol s = returnSymbol();
 				
-				if (nxtCh == 10) {
-					// exit comment state
-					comment = false;
+				// update counters
+				startRow++;
+				endRow++;
+				startCol = 1;
+				endCol = 0;				
+				
+				if (s != null) return s;
+				continue;
+			}
+			
+			/**
+			 * Handle whitespaces. 
+			 */
+			if (nxtCh == 32 || nxtCh == 9) {
+				int incr = (nxtCh == 32) ? 1 : 4;
+				
+				// if word is emtpy, increase startCol counter
+				if (word.length() == 0) startCol += incr;
+				// otherwise increase endRow counter
+				else endCol += incr;
 					
-					/**
-					 * If in string state and string not properly closed,
-					 * return lexal-error.
-					 */
-					if (string && !stringClosed) {
-						Report.report(new Position(startRow, startCol, endRow, endCol), 
-								"String literal is not properly closed by a single-quote.");
-						break;
-					}
-					
-					/**
-					 * Update counters.
-					 */
-					startRow++;
-					endRow++;
-					startCol = 1;
-					endCol = 0;
+				if (!string) {
+					Symbol s = returnSymbol();
 					if (s != null) return s;
 				}
-				
-				/**
-				 * Update counters.
-				 */
-				if (word.length() == 0) {
-					if (nxtCh == 32) startCol++;
-					if (nxtCh == 9) startCol += 4;
-				}
-				else {
-					if (nxtCh == 32) endCol++;
-					if (nxtCh == 9) endCol += 4;
-				}
-				
-				if (s != null && !string) return s;
 				if (!string) continue;
 			}
 			
 			/**
 			 * If character is '#' and not in string state, enter comment state.
 			 */
-			else if (nxtCh == '#' && !string) {
+			if (nxtCh == 35 && !string) {
 				comment = true;
 				Symbol s = returnSymbol();
 				if (s == null) continue;
@@ -239,29 +237,19 @@ public class LexAn {
 			 */
 			if (comment) continue;
 			
-			/**
-			 * Entering state-machine. --------------------------------------------------
-			 */
-			
 			/** 
 			 * If not in string state, 
 			 * first check if character is an operator (',', ';' .... )
 			 */
-			if (!string) {
-				Symbol operator = isOperator(nxtCh);
-				// if this is operator, return currently processed word and save the character
-				if (operator != null) {
-					dontRead = true;
-					previous = nxtCh;
-					
-					Symbol s = returnSymbol();
-					if (s != null) return s;
-					
-					continue;
-				}
+			Symbol operator = isOperator(nxtCh);
+			if (operator != null) {
+				dontRead = true;
+				
+				Symbol s = returnSymbol();
+				if (s != null) return s;
+				
+				continue;
 			}
-			// append current character
-			word.append((char)nxtCh);
 			
 			/**
 			 * If this is the first character, we can determine whether
@@ -270,127 +258,71 @@ public class LexAn {
 			 * If current character is numeric, it is a number.
 			 * Otherwise an identifier.
 			 */
-			if (word.length() == 1) {
-				if (isNumeric(nxtCh))
-					numeric = true;
-				else if (nxtCh == '\'')
-					string = true;
-				else
-					identifier = true;
+			if (word.length() == 0) {
+				if (nxtCh == '\'') string = true;
+				else if (isNumeric(nxtCh)) numeric = true;
+				else identifier = true;
+				word.append((char)nxtCh);
+				continue;
 			}
-			else {
+			
+			if (numeric) {
 				/**
-				 * If state is numeric.
+				 * If in numeric state, and character isn't a number,
+				 * return symbol and save character.
 				 */
-				if (numeric) {
-					/**
-					 * If current character is single-quote, exit numeric and enter
-					 * string state.
-					 */
-					if (nxtCh == '\'') {
-						dontRead = true;
-						
-						Symbol s = returnSymbol();
-						if (s != null) return s;
-						
-						continue;
-					}
+				if (!isNumeric(nxtCh)) {
+					Symbol s = returnSymbol();
 					
-					/**
-					 * If this is second character and previous character was '0',
-					 * this must either be 'x' or char in range '0' - '7'.
-					 * Otherwise return lexal-error.
-					 */
-					if (previous == '0' && word.length() == 2) {
-						/**
-						 * Enter hexadecimal state.
-						 */
-						if (nxtCh == 'x' || nxtCh == 'X') {
-							hexadecimal = true;
-							continue;
-						}
-						/**
-						 * Enter octal state.
-						 */
-						else if (isOctal(nxtCh))
-							octal = true;
-						/**
-						 * Return lexal-error ilegal char.
-						 */
-						else {
-							Position pos = new Position(startRow, startCol, endRow, endCol);
-							Report.report(pos, "Invalid token ['" + (char)nxtCh + "']. Expected 'x' or 0-7!");
-							break;
-						}
-					}					
-					/**
-					 * If octal.
-					 */
-					if (octal && !isOctal(nxtCh)) {
-						Position pos = new Position(startRow, startCol, endRow, endCol);
-						Report.report(pos, "Invalid token ['" + (char)nxtCh + "']. Expected 0-7!");
-						break;
+					numeric = false;
+					dontRead = true;
+					
+					return s;
+				}
+				word.append((char)nxtCh);
+				continue;
+			}
+			
+			if (string) {
+				if (stringClosed) {
+					if (nxtCh == '\'') stringClosed = false;
+					else {
+						dontRead = true;
+						return returnSymbol();
 					}
-					/**
-					 * If decimal.
-					 */
-					if (!hexadecimal && !isNumeric(nxtCh)) {
-						Position pos = new Position(startRow, startCol, endRow, endCol);
-						Report.report(pos, "Invalid token ['" + (char)nxtCh + "']. Expected 0-9!");
-						break;
-					}
-					/**
-					 * If hexadecimal.
-					 */
-					if (hexadecimal && !isHexadecimal(nxtCh)) {
-						Position pos = new Position(startRow, startCol, endRow, endCol);
-						Report.report(pos, "Invalid token ['" + (char)nxtCh + "']. Expected 0-9 or A-F!");
-						break;
-					}
+				}
+				else {
+					if (nxtCh == '\'') stringClosed = true;
 				}
 				
 				/**
-				 * If in string state, read characters until a single-quote.
-				 * When found, also check the next character, because double single-quote 
-				 * is a single-quote part of the string.
+				 * If in string state, and character isn't a valid string char,
+				 * return symbol and save character.
 				 */
-				else if (string) {
-					if (nxtCh >= 32 && nxtCh < 126) {
-						if (nxtCh == '\'') {
-							previous = '\'';
-							stringClosed = true;
-
-							nxtCh = file.read();
-							endCol++;
-							
-							if (nxtCh != '\'') {
-								dontRead = true;
-								return returnSymbol();
-							}
-							else 
-								stringClosed = false;
-						}
-					}
-					else {
-						Report.report(new Position(startRow, startCol, endRow, endCol),
-								"Invalid character in string constant!");
-						break;
-					}
+				if (!(nxtCh >= 32 && nxtCh <= 126)) {
+					Symbol s = returnSymbol();
+					
+					string = false;
+					dontRead = true;
+					
+					return s;
 				}
-				/**
-				 * Allow numbers, letters and '_' to be in identifier.
-				 */
-				else if (identifier) {
-					if (!isLegal(nxtCh)) {
-						Report.report(new Position(startRow, startCol, endRow, endCol),
-								"Ilegal character ['" + (char)nxtCh + "'] in identifier!");
-						break;
-					}
+				word.append((char)nxtCh);
+				continue;
+			}
+			
+			if (identifier) {
+				if (isNumeric(nxtCh) || 
+					(nxtCh >= 'a' && nxtCh <= 'z') ||
+					(nxtCh >= 'A' && nxtCh <= 'Z'))
+					word.append((char)nxtCh);
+				else {
+					Report.report(new Position(startRow, startCol, endRow, endCol),
+							"Invalid token in identifier!");
+					return null;
 				}
 			}
 		}
-		
-		return null;
 	}
 	
 	/**
@@ -441,27 +373,12 @@ public class LexAn {
 		return null;
 	}
 	
-	private boolean isLegal(int ch) {
-		return (isNumeric(nxtCh) || (ch >= 'a' && ch <= 'z') ||
-				(ch >= 'A' && ch <= 'Z') || ch == '_');
-	}
-
 	private boolean isNumeric(int ch) {
 		return (ch >= '0' && ch <= '9');
 	}
 
-	private boolean isHexadecimal(int ch) {
-		return isNumeric(ch) || (ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F');
-	}
-
-	private boolean isOctal(int ch) {
-		return (ch >= '0' && ch <= '7');
-	}
-
 	private void reset() {
 		numeric = false;
-		hexadecimal = false;
-		octal = false;
 		string = false;
 		logical = false;
 		stringClosed = false;
