@@ -115,7 +115,7 @@ public class LexAn {
 			startCol = endCol;
 			startRow = endRow;
 
-			if (s == null) s = new Symbol(Token.EOF, "", null);
+			if (s == null) s = new Symbol(Token.EOF, "$", startRow, startCol, endRow, endCol);
 			dump(s);
 			
 			return s;
@@ -134,7 +134,7 @@ public class LexAn {
 				
 				// if EOF return EOF token
 				if (nxtCh == -1)
-					return new Symbol(Token.EOF, "EOF", new Position(endRow, endCol));
+					return new Symbol(Token.EOF, "$", new Position(endRow, endCol));
 				
 				/**
 				 *  If previous character was an operator,
