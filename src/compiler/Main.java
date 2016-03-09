@@ -1,6 +1,7 @@
 package compiler;
 
 import compiler.lexan.*;
+import compiler.synan.*;
 
 /**
  * Osnovni razred prevajalnika, ki vodi izvajanje celotnega procesa prevajanja.
@@ -75,12 +76,14 @@ public class Main {
 				}
 				break;
 			}
+			// Sintaksna analiza.
+			SynAn synAn = new SynAn(lexAn, dumpPhases.contains("synan"));
+			synAn.parse();
+			if (execPhase.equals("synan")) break;
 			
 			// Neznana faza prevajanja.
-			if (! execPhase.equals("")) {
+			if (! execPhase.equals(""))
 				Report.warning("Unknown compiler phase specified.");
-				System.exit(10);
-			}
 		}
 
 		// Zapiranje datoteke z vmesnimi rezultati.

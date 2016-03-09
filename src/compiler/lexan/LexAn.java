@@ -178,6 +178,11 @@ public class LexAn {
 			}
 			
 			/**
+			 * If carriage return, skip it.
+			 */
+			if (nxtCh == 13) continue;
+			
+			/**
 			 * If newline, exit comment state and return symbol.
 			 */
 			if (nxtCh == 10) {				
@@ -269,7 +274,7 @@ public class LexAn {
 			if (numeric) {
 				/**
 				 * If in numeric state, and character isn't a number,
-				 * return symbol and save character.
+				 * return symbol and exit numeric state.
 				 */
 				if (!isNumeric(nxtCh)) {
 					Symbol s = returnSymbol();
@@ -284,6 +289,14 @@ public class LexAn {
 			}
 			
 			if (string) {
+				/**
+				 * Mechanism for handling quotes.
+				 * 
+				 * When first single-quote is found, enter stringClosed state.
+				 * When in stringClosed state, check if current character is again single-quote.
+				 * If it is not, string ended.
+				 * Otherwise single-quote is part of string.
+				 */
 				if (stringClosed) {
 					if (nxtCh == '\'') stringClosed = false;
 					else {
@@ -291,18 +304,15 @@ public class LexAn {
 						return returnSymbol();
 					}
 				}
-				else {
-					if (nxtCh == '\'') stringClosed = true;
-				}
+				else { if (nxtCh == '\'') stringClosed = true; }
 				
 				/**
-				 * If in string state, and character isn't a valid string char,
-				 * return symbol and save character.
+				 * If in string state, and character isn't valid,
+				 * return symbol and exit string state.
 				 */
 				if (!(nxtCh >= 32 && nxtCh <= 126)) {
 					Symbol s = returnSymbol();
 					
-					string = false;
 					dontRead = true;
 					
 					return s;
