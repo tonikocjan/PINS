@@ -49,12 +49,12 @@ public class SynAn {
 	private void parseSource() {
 		parseDefinitions();
 
-		if (currentSymbol().token != Token.EOF)
-			Report.report(currentSymbol().position, "Syntax error!");
+		if (symbol.token != Token.EOF)
+			Report.report(symbol.position, "Syntax error!");
 	}
 	
 	private void parseDefinitions() {
-		switch (currentSymbol().token) {
+		switch (symbol.token) {
 		case Token.KW_TYP:
 			skipSymbol();
 			parseTypeDefinition();
@@ -68,8 +68,8 @@ public class SynAn {
 			parseVarDefinition();
 			break;
 		default:
-			if (currentSymbol().token != Token.EOF)
-				error("Syntax error on token \"" + currentSymbol().lexeme + "\", delete this token");
+			if (symbol.token != Token.EOF)
+				error("Syntax error on token \"" + symbol.lexeme + "\", delete this token");
 			else
 				error(previous, "Syntax error on token \"" + previous.lexeme + "\", delete this token");
 			return;
@@ -79,7 +79,7 @@ public class SynAn {
 	}
 
 	private void parseDefinitions_() {
-		switch (currentSymbol().token) {
+		switch (symbol.token) {
 		case Token.EOF:
 			break;
 		case Token.SEMIC:
@@ -92,7 +92,7 @@ public class SynAn {
 	}
 
 	private void parseTypeDefinition() {
-		if (currentSymbol().token == Token.IDENTIFIER) {
+		if (symbol.token == Token.IDENTIFIER) {
 			if (next().token == Token.COLON) {
 				skipSymbol();
 				parseType();
@@ -106,15 +106,15 @@ public class SynAn {
 	}
 
 	private void parseFunDefinition() {
-		if (currentSymbol().token == Token.IDENTIFIER) {
+		if (symbol.token == Token.IDENTIFIER) {
 			if (next().token == Token.LPARENT) {
 				skipSymbol();
 				parseParameters();
-				if (currentSymbol().token != Token.EOF) {
+				if (symbol.token != Token.EOF) {
 					if (next().token == Token.COLON) {
 						skipSymbol();
 						parseType();
-						if (currentSymbol().token == Token.EOF) return;
+						if (symbol.token == Token.EOF) return;
 						
 						if (next().token == Token.ASSIGN) {
 							parseExpressions();
@@ -136,11 +136,20 @@ public class SynAn {
 	}
 
 	private void parseVarDefinition() {
-
+		if (symbol.token == Token.IDENTIFIER) {
+			if (next().token == Token.COLON) {
+				skipSymbol();
+				parseType();
+				return;
+			}
+			error(previous, "Syntax error on token \""+ previous.lexeme + "\", expected \":\" after this token");
+			return;
+		}
+		error(previous, "Syntax error on token \""+ previous.lexeme + "\", expected identifier after this token");
 	}
 	
 	private void parseType() {
-		switch (currentSymbol().token) {
+		switch (symbol.token) {
 		case Token.IDENTIFIER:
 		case Token.LOGICAL:
 		case Token.INTEGER:
@@ -163,12 +172,12 @@ public class SynAn {
 			else error("Syntax error, insert \"[\"");
 			break;
 		default:
-			error("Syntax error on token \"" + currentSymbol().lexeme + "\", expected \"variable type\"");
+			error("Syntax error on token \"" + symbol.lexeme + "\", expected \"variable type\"");
 		}
 	}
 	
 	private void parseParameters() {
-		switch (currentSymbol().token) {
+		switch (symbol.token) {
 		case Token.IDENTIFIER:
 			if (next().token == Token.COLON) {
 				skipSymbol();
@@ -183,7 +192,7 @@ public class SynAn {
 	}
 	
 	private void parseParameters_() {
-		switch (currentSymbol().token) {
+		switch (symbol.token) {
 		case Token.COMMA:
 			parseParameters();
 			break;
@@ -199,12 +208,7 @@ public class SynAn {
 
 	/**
 	 * 
-	 * @return
 	 */
-	private Symbol currentSymbol() {
-		return symbol;
-	}
-
 	private void skipSymbol() {
 		previous = symbol;
 		symbol = lexAn.lexAn();
@@ -216,7 +220,7 @@ public class SynAn {
 	}
 	
 	private void error(String err) {
-		error(currentSymbol(), err);
+		error(symbol, err);
 	}
 	
 	private void error(Symbol s, String err) {
