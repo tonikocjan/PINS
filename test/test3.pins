@@ -1,6 +1,12 @@
-integer x = 10;
-while (x < 20) {
-	x = x + 1;
+# type declarations
+typ int_arr : arr[10] integer;
+typ bool : logical;
+
+# variable declarations
+var x : bool;
+
+# function declarations
+fun square() : int =
+{ 
+	+x
 }
-logical bool = false;
-bool = #false;

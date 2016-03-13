@@ -1,5 +1,3 @@
-abc		abc
-
 # type declarations
 typ int_arr : arr[10] integer;
 typ bool : logical;
