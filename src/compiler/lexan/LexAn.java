@@ -46,24 +46,6 @@ public class LexAn {
 	private int startCol = 1, startRow = 1;
 	private int endCol = 0, endRow = 1;
 
-	/**
-	 * State-machine flags.
-	 * 
-	 * PINS contains three constants: 
-	 * - logical: "true" or "false" 
-	 * - numeric: decimal, hexadecimal and octal
-	 * - string: sequence of characters inside single-quotes
-	 */
-	private boolean numeric = false;
-
-	private boolean string = false;
-	private boolean stringClosed = false;
-	
-	private boolean logical = false;
-	private boolean identifier = false;
-	
-	private boolean comment = false;
-
 	private boolean dontRead = false;
 
 	/**
@@ -107,13 +89,7 @@ public class LexAn {
 		if (file == null) return null;
 		
 		try {
-			// reset state-machine
-			reset();
-
 			Symbol s = parseSymbol();
-
-			startCol = endCol;
-			startRow = endRow;
 
 			if (s == null) s = new Symbol(Token.EOF, "$", startRow, startCol, endRow, endCol);
 			dump(s);
@@ -129,233 +105,99 @@ public class LexAn {
 
 	private Symbol parseSymbol() throws IOException {
 		while (true) {
-			if (dontRead) {
-				dontRead = false;
-				
-				// if EOF return EOF token
-				if (nxtCh == -1)
-					return new Symbol(Token.EOF, "$", new Position(endRow, endCol));
-				
-				/**
-				 *  If previous character was an operator,
-				 *  also check next character ('==', '!=' ...)
-				 */
-				Symbol op = isOperator(nxtCh);
-				if (op != null) {
-					// read next character
-					int tmp = file.read();
-					Symbol op2 = isOperator2(nxtCh, tmp);
-					
-					nxtCh = tmp;
-					if (op2 != null) return op2;
-					
-					dontRead = true;
-					return op;
-				}
-			}
-			else {
-				nxtCh = file.read();
-				endCol++;
-			}
+			startCol += word.length();
+			word = new StringBuilder(); 
 			
-			/**
-			 * If EOF, return symbol and exit.
-			 */
-			if (nxtCh == -1) {
-				dontRead = true;
-				
-				/**
-				 * If in string state and string not closed,
-				 * report lexal error.
-				 */
-				if (string && !stringClosed) {
-					Report.report(new Position(startRow, startCol, endRow, endCol),
-							"String literal not properly closed");
-					return null;
-				}
-				
-				return returnSymbol();
-			}
+			if (!dontRead) nxtCh = file.read();
+			else dontRead = false;
 			
-			/**
-			 * If carriage return, skip it.
-			 */
-			if (nxtCh == 13) continue;
+			if (nxtCh == -1) return new Symbol(Token.EOF, "$", 
+					startRow, startCol, startRow, startCol);
 			
-			/**
-			 * If newline, exit comment state and return symbol.
-			 */
-			if (nxtCh == 10) {				
-				/**
-				 * If in string state and string not closed,
-				 * report lexal error.
-				 */
-				if (string && !stringClosed) {
-					Report.report(new Position(startRow, startCol, endRow, endCol),
-							"String literal not properly closed");
-					return null;
-				}
-				
-				comment = false;
-				Symbol s = returnSymbol();
-				
-				// update counters
+			if (nxtCh == '#') {
 				startRow++;
-				endRow++;
-				startCol = 1;
-				endCol = 0;				
-				
-				if (s != null) return s;
-				continue;
-			}
-			
-			/**
-			 * Handle whitespaces. 
-			 */
-			if (nxtCh == 32 || nxtCh == 9) {
-				Symbol s = returnSymbol();
-				int incr = (nxtCh == 32) ? 1 : 4;
-				
-				// if word is empty, increase startCol counter
-				if (word.length() == 0) startCol += incr;
-				// otherwise increase endRow counter
-				else endCol += incr;
-					
-				if (!string && s != null) return s;
-				if (!string) continue;
-			}
-			
-			/**
-			 * If character is '#' and not in string state, enter comment state.
-			 */
-			if (nxtCh == 35 && !string) {
-				comment = true;
-				Symbol s = returnSymbol();
-				if (s == null) continue;
-				return s;
-			}
-			
-			/**
-			 * Skip characters while in comment state.
-			 */
-			if (comment) {
-				/**
-				 * If in string state, and character isn't valid,
-				 * return symbol and exit string state.
-				 */
-				if (!(nxtCh >= 32 && nxtCh <= 126)) {
-					Report.report("Invalid token \"" + (char)nxtCh + "\" in comment");
-					return null;
+				while (nxtCh != -1 && nxtCh != 10) {
+					nxtCh = file.read();
 				}
-				continue;
 			}
 			
-			/** 
-			 * If not in string state, 
-			 * first check if character is an operator (',', ';' .... )
-			 */
-			Symbol operator = isOperator(nxtCh);
-			if (operator != null) {
-				dontRead = true;
-						
-				/**
-				 * If in string state and string not closed,
-				 * report lexal error.
-				 */
-				if (string && !stringClosed) {
-					Report.report(new Position(startRow, startCol, endRow, endCol),
-							"String literal not properly closed");
-					return null;
-				}
-				Symbol s = returnSymbol();
-				if (s != null) return s;
-				
-				continue;
-			}
-			
-			/**
-			 * If this is the first character, we can determine whether
-			 * it will be a number, string or identifier.
-			 * If current character is a single quote, it is a string. 
-			 * If current character is numeric, it is a number.
-			 * Otherwise an identifier.
-			 */
-			if (word.length() == 0) {
-				if (nxtCh == '\'') string = true;
-				else if (isNumeric(nxtCh)) numeric = true;
-				else if (isLegalId(nxtCh)) identifier = true;
-				else {
-					Report.report("Invalid token \""+ (char)nxtCh + "\"");
-					return null;
-				}
-				
-				word.append((char)nxtCh);
-				continue;
-			}
-			
-			if (numeric) {
-				/**
-				 * If in numeric state, and character isn't a number,
-				 * return symbol and exit numeric state.
-				 */
-				if (!isNumeric(nxtCh)) {
-					Symbol s = returnSymbol();
-					
-					numeric = false;
-					dontRead = true;
-					
-					return s;
-				}
-				word.append((char)nxtCh);
-				continue;
-			}
-			
-			if (string) {
-				/**
-				 * Mechanism for handling quotes.
-				 * 
-				 * When first single-quote is found, enter stringClosed state.
-				 * When in stringClosed state, check if current character is again single-quote.
-				 * If it is not, string ended.
-				 * Otherwise single-quote is part of string.
-				 */
-				if (stringClosed) {
-					if (nxtCh == '\'') stringClosed = false;
-					else {
-						dontRead = true;
-						return returnSymbol();
+			if (nxtCh == '\'') {
+				word.append('\'');
+				while (true) {
+					nxtCh = file.read();
+					if (nxtCh < 32 || nxtCh > 126) {
+						if (isWhiteSpace(nxtCh) || nxtCh == -1) break;
+						Report.report("Invalid token in string constant");
+						return null;
 					}
-				}
-				else { if (nxtCh == '\'') stringClosed = true; }
-				
-				/**
-				 * If in string state, and character isn't valid,
-				 * return symbol and exit string state.
-				 */
-				if (!(nxtCh >= 32 && nxtCh <= 126)) {
-					Report.report("Invalid token in string constant");
-					return null;
-				}
-				
-				word.append((char)nxtCh);
-				continue;
-			}
-			
-			if (identifier) {
-				if (isLegalId(nxtCh))
+					
 					word.append((char)nxtCh);
-				else {
+					
 					if (nxtCh == '\'') {
-						Symbol s = returnSymbol();
-						identifier = false;
-						string = true;
-						dontRead = true;
-						return s;
+						nxtCh = file.read();
+						if (nxtCh == '\'') word.append((char)nxtCh);
+						else {
+							dontRead = true;
+							break;
+						}
 					}
-					Report.report(new Position(startRow, startCol, endRow, endCol),
-							"Invalid token in identifier");
-					return null;
 				}
+				// if last character of the word is't single-quote, report error
+				if (word.charAt(word.length() - 1) != '\'') {
+					Report.report("String not properly closed with single-quote");
+				}
+				
+				return new Symbol(Token.STR_CONST, word.toString(), 
+						startRow, startCol, startRow, startCol + word.length());
+			}
+			
+			if (isNumeric(nxtCh)) {
+				while (isNumeric(nxtCh)) {
+					word.append((char)nxtCh);
+					nxtCh = file.read();
+				}
+				dontRead = true;
+
+				return new Symbol(Token.INT_CONST, word.toString(), 
+						startRow, startCol, startRow, startCol + word.length());
+			}
+			
+			/**
+			 * Parse identifier.
+			 */
+			if (isLegalId(nxtCh)) {
+				while (true) {
+					word.append((char)nxtCh);
+					nxtCh = file.read();
+					
+					if (isOperator(nxtCh) != null || isWhiteSpace(nxtCh) || nxtCh == -1) {
+						dontRead = true;
+						int token = Token.IDENTIFIER;
+						
+						// Check if word is keyword
+						if (keywordsMap.containsKey(word.toString())) 
+							token = keywordsMap.get(word.toString());
+						// Check if word is log const
+						if (word.toString().equals("true") || word.toString().equals("false"))
+							token = Token.LOG_CONST;
+						return new Symbol(token, word.toString(), 
+								startRow, startCol, startRow, startCol + word.length());
+					}
+					if (!isLegalId(nxtCh)) {
+						Report.report("Invalid token \"" + (char)nxtCh + "\" in identifier");
+						return null;
+					}
+				}
+			}
+			
+			Symbol op = isOperator(nxtCh);
+			if (op != null) {
+				int tmpCh = file.read();
+				Symbol op2 = isOperator2(nxtCh, tmpCh);
+				if (op2 != null) return op2;
+				dontRead = true;
+				nxtCh = tmpCh;
+				return op;
 			}
 		}
 	}
@@ -412,50 +254,15 @@ public class LexAn {
 		return (ch >= '0' && ch <= '9');
 	}
 	
+	private boolean isWhiteSpace(int ch) {
+		return (ch == 32 || ch == 9 || ch == 13 || ch == 10);
+	}
+	
 	private boolean isLegalId(int ch) {
 		return isNumeric(nxtCh) || 
 				(nxtCh >= 'a' && nxtCh <= 'z') ||
 				(nxtCh >= 'A' && nxtCh <= 'Z') ||
 				 nxtCh == '_';
-	}
-
-	private void reset() {
-		numeric = false;
-		string = false;
-		logical = false;
-		stringClosed = false;
-		word = new StringBuilder();
-	}
-
-	/**
-	 * @return Symbol based on current state.
-	 */
-	private Symbol returnSymbol() {
-		if (word.length() == 0) return null;
-		
-		if (numeric)
-			return new Symbol(Token.INT_CONST, word.toString(), startRow, startCol, endRow, endCol);
-		if (string)
-			return new Symbol(Token.STR_CONST, word.toString(), startRow, startCol, endRow, endCol);
-		if (logical)
-			return new Symbol(Token.LOG_CONST, word.toString(), startRow, startCol, endRow, endCol);
-		
-		/**
-		 * If in identifier state, check if word is
-		 * - keyword or
-		 * - logical literal ("true", "false")
-		 */
-		if (identifier) {
-			if (keywordsMap.containsKey(word.toString()))
-				return new Symbol(keywordsMap.get(word.toString()), 
-						word.toString(), startRow, startCol, endRow, endCol);
-			else if (word.toString().equals("true") || word.toString().equals("false"))
-				return new Symbol(Token.LOG_CONST, 
-						word.toString(), startRow, startCol, endRow, endCol);
-			return new Symbol(Token.IDENTIFIER, 
-					word.toString(), startRow, startCol, endRow, endCol);
-		}
-		return null;
 	}
 
 	/**
