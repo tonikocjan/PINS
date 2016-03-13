@@ -144,7 +144,8 @@ public class LexAn {
 				}
 				// if last character of the word is't single-quote, report error
 				if (word.charAt(word.length() - 1) != '\'') {
-					Report.report("String not properly closed with single-quote");
+					Report.report("String literal not properly closed");
+					return null;
 				}
 				
 				return new Symbol(Token.STR_CONST, word.toString(), 
