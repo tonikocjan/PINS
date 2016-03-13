@@ -170,7 +170,7 @@ public class LexAn {
 				 */
 				if (string && !stringClosed) {
 					Report.report(new Position(startRow, startCol, endRow, endCol),
-							"String literal not properly closed!");
+							"String literal not properly closed");
 					return null;
 				}
 				
@@ -192,7 +192,7 @@ public class LexAn {
 				 */
 				if (string && !stringClosed) {
 					Report.report(new Position(startRow, startCol, endRow, endCol),
-							"String literal not properly closed!");
+							"String literal not properly closed");
 					return null;
 				}
 				
@@ -213,17 +213,15 @@ public class LexAn {
 			 * Handle whitespaces. 
 			 */
 			if (nxtCh == 32 || nxtCh == 9) {
+				Symbol s = returnSymbol();
 				int incr = (nxtCh == 32) ? 1 : 4;
 				
-				// if word is emtpy, increase startCol counter
+				// if word is empty, increase startCol counter
 				if (word.length() == 0) startCol += incr;
 				// otherwise increase endRow counter
 				else endCol += incr;
 					
-				if (!string) {
-					Symbol s = returnSymbol();
-					if (s != null) return s;
-				}
+				if (!string && s != null) return s;
 				if (!string) continue;
 			}
 			
@@ -240,7 +238,17 @@ public class LexAn {
 			/**
 			 * Skip characters while in comment state.
 			 */
-			if (comment) continue;
+			if (comment) {
+				/**
+				 * If in string state, and character isn't valid,
+				 * return symbol and exit string state.
+				 */
+				if (!(nxtCh >= 32 && nxtCh <= 126)) {
+					Report.report("Invalid token \"" + (char)nxtCh + "\" in comment");
+					return null;
+				}
+				continue;
+			}
 			
 			/** 
 			 * If not in string state, 
@@ -249,7 +257,16 @@ public class LexAn {
 			Symbol operator = isOperator(nxtCh);
 			if (operator != null) {
 				dontRead = true;
-				
+						
+				/**
+				 * If in string state and string not closed,
+				 * report lexal error.
+				 */
+				if (string && !stringClosed) {
+					Report.report(new Position(startRow, startCol, endRow, endCol),
+							"String literal not properly closed");
+					return null;
+				}
 				Symbol s = returnSymbol();
 				if (s != null) return s;
 				
@@ -266,7 +283,12 @@ public class LexAn {
 			if (word.length() == 0) {
 				if (nxtCh == '\'') string = true;
 				else if (isNumeric(nxtCh)) numeric = true;
-				else identifier = true;
+				else if (isLegalId(nxtCh)) identifier = true;
+				else {
+					Report.report("Invalid token \""+ (char)nxtCh + "\"");
+					return null;
+				}
+				
 				word.append((char)nxtCh);
 				continue;
 			}
@@ -311,24 +333,27 @@ public class LexAn {
 				 * return symbol and exit string state.
 				 */
 				if (!(nxtCh >= 32 && nxtCh <= 126)) {
-					Symbol s = returnSymbol();
-					
-					dontRead = true;
-					
-					return s;
+					Report.report("Invalid token in string constant");
+					return null;
 				}
+				
 				word.append((char)nxtCh);
 				continue;
 			}
 			
 			if (identifier) {
-				if (isNumeric(nxtCh) || 
-					(nxtCh >= 'a' && nxtCh <= 'z') ||
-					(nxtCh >= 'A' && nxtCh <= 'Z'))
+				if (isLegalId(nxtCh))
 					word.append((char)nxtCh);
 				else {
+					if (nxtCh == '\'') {
+						Symbol s = returnSymbol();
+						identifier = false;
+						string = true;
+						dontRead = true;
+						return s;
+					}
 					Report.report(new Position(startRow, startCol, endRow, endCol),
-							"Invalid token in identifier!");
+							"Invalid token in identifier");
 					return null;
 				}
 			}
@@ -385,6 +410,13 @@ public class LexAn {
 	
 	private boolean isNumeric(int ch) {
 		return (ch >= '0' && ch <= '9');
+	}
+	
+	private boolean isLegalId(int ch) {
+		return isNumeric(nxtCh) || 
+				(nxtCh >= 'a' && nxtCh <= 'z') ||
+				(nxtCh >= 'A' && nxtCh <= 'Z') ||
+				 nxtCh == '_';
 	}
 
 	private void reset() {
@@ -443,5 +475,4 @@ public class LexAn {
 			Report.dumpFile().println(
 					"[" + symb.position.toString() + "] " + symb.toString());
 	}
-
 }
