@@ -7,6 +7,7 @@ import compiler.lexan.*;
  * Sintaksni analizator.
  * 
  * @author sliva
+ * @implementation Toni Kocjan
  */
 public class SynAn {
 

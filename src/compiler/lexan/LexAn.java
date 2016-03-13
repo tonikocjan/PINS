@@ -44,7 +44,6 @@ public class LexAn {
 	 * Position.
 	 */
 	private int startCol = 1, startRow = 1;
-	private int endCol = 0, endRow = 1;
 
 	private boolean dontRead = false;
 
@@ -91,13 +90,13 @@ public class LexAn {
 		try {
 			Symbol s = parseSymbol();
 
-			if (s == null) s = new Symbol(Token.EOF, "$", startRow, startCol, endRow, endCol);
+			if (s == null) s = new Symbol(Token.EOF, "$", startRow, startCol, startRow, startCol + 1);
 			dump(s);
 			
 			return s;
 
 		} catch (IOException e) {
-			Report.report("Error while parsing input file! Exiting.");
+			Report.report("Error while parsing input file! Exiting ...");
 		}
 
 		return null;
@@ -114,20 +113,40 @@ public class LexAn {
 			if (nxtCh == -1) return new Symbol(Token.EOF, "$", 
 					startRow, startCol, startRow, startCol);
 			
+			/**
+			 * Skip characters while comment.
+			 */
 			if (nxtCh == '#') {
 				startRow++;
-				while (nxtCh != -1 && nxtCh != 10) {
-					nxtCh = file.read();
-				}
+				startCol = 1;
+				while (nxtCh != -1 && nxtCh != 10) nxtCh = file.read();
 			}
 			
+			/**
+			 * Handle whitespaces.
+			 */
+			if (isWhiteSpace(nxtCh)) {
+				// update counters
+				if (nxtCh == 32 || nxtCh == 9)
+					startCol += (nxtCh == 32) ? 1 : 4;
+				else if (nxtCh == 10) {
+					startCol = 1;
+					startRow++;
+				}
+				else continue;
+			}
+			
+			/**
+			 * Parse string.
+			 */
 			if (nxtCh == '\'') {
 				word.append('\'');
 				while (true) {
 					nxtCh = file.read();
 					if (nxtCh < 32 || nxtCh > 126) {
 						if (isWhiteSpace(nxtCh) || nxtCh == -1) break;
-						Report.report("Invalid token in string constant");
+						Report.report(new Position(startRow, startCol, startRow, startCol + word.length() + 1), 
+								"Invalid token in string constant");
 						return null;
 					}
 					
@@ -142,9 +161,10 @@ public class LexAn {
 						}
 					}
 				}
-				// if last character of the word is't single-quote, report error
+				// if last character of the word isn't single-quote, report error
 				if (word.charAt(word.length() - 1) != '\'') {
-					Report.report("String literal not properly closed");
+					Report.report(new Position(startRow, startCol, startRow, startCol + word.length()),
+							"String literal not properly closed");
 					return null;
 				}
 				
@@ -152,6 +172,9 @@ public class LexAn {
 						startRow, startCol, startRow, startCol + word.length());
 			}
 			
+			/**
+			 * Parse int const.
+			 */
 			if (isNumeric(nxtCh)) {
 				while (isNumeric(nxtCh)) {
 					word.append((char)nxtCh);
@@ -171,7 +194,15 @@ public class LexAn {
 					word.append((char)nxtCh);
 					nxtCh = file.read();
 					
-					if (isOperator(nxtCh) != null || isWhiteSpace(nxtCh) || nxtCh == -1) {
+					/**
+					 * Delemiters for identifiers are:
+					 * - whitespaces
+					 * - EOF
+					 * - operator and
+					 * - single-quote
+					 */
+					if (isOperator(nxtCh) != null || isWhiteSpace(nxtCh) || 
+							nxtCh == -1 || nxtCh == '\'') {
 						dontRead = true;
 						int token = Token.IDENTIFIER;
 						
@@ -181,23 +212,32 @@ public class LexAn {
 						// Check if word is log const
 						if (word.toString().equals("true") || word.toString().equals("false"))
 							token = Token.LOG_CONST;
+						
 						return new Symbol(token, word.toString(), 
 								startRow, startCol, startRow, startCol + word.length());
 					}
 					if (!isLegalId(nxtCh)) {
-						Report.report("Invalid token \"" + (char)nxtCh + "\" in identifier");
+						Report.report(new Position(startRow, startCol, startRow, startCol + word.length() + 1), 
+								"Invalid token \"" + (char)nxtCh + "\" in identifier");
 						return null;
 					}
 				}
 			}
 			
+			/**
+			 * Parse operator.
+			 */
 			Symbol op = isOperator(nxtCh);
 			if (op != null) {
 				int tmpCh = file.read();
 				Symbol op2 = isOperator2(nxtCh, tmpCh);
-				if (op2 != null) return op2;
+				if (op2 != null) {
+					startCol += 2;
+					return op2;
+				}
 				dontRead = true;
 				nxtCh = tmpCh;
+				startCol++;
 				return op;
 			}
 		}
@@ -207,31 +247,31 @@ public class LexAn {
 	 * Check if character is a single-character operator.
 	 */
 	private Symbol isOperator(int ch) {
-		if (ch == '+') return new Symbol(Token.ADD, "+", startRow, startCol, endRow, endCol);
-		if (ch == '-') return new Symbol(Token.SUB, "-", startRow, startCol, endRow, endCol);
-		if (ch == '*') return new Symbol(Token.MUL, "*", startRow, startCol, endRow, endCol);
-		if (ch == '/') return new Symbol(Token.DIV, "/", startRow, startCol, endRow, endCol);
-		if (ch == '%') return new Symbol(Token.MOD, "%", startRow, startCol, endRow, endCol);
+		if (ch == '+') return new Symbol(Token.ADD, "+", startRow, startCol, startRow, startCol + 1);
+		if (ch == '-') return new Symbol(Token.SUB, "-", startRow, startCol, startRow, startCol + 1);
+		if (ch == '*') return new Symbol(Token.MUL, "*", startRow, startCol, startRow, startCol + 1);
+		if (ch == '/') return new Symbol(Token.DIV, "/", startRow, startCol, startRow, startCol + 1);
+		if (ch == '%') return new Symbol(Token.MOD, "%", startRow, startCol, startRow, startCol + 1);
 
-		if (ch == '&') return new Symbol(Token.AND, "&", startRow, startCol, endRow, endCol);
-		if (ch == '|') return new Symbol(Token.IOR, "|", startRow, startCol, endRow, endCol);
-		if (ch == '!') return new Symbol(Token.NOT, "!", startRow, startCol, endRow, endCol);
+		if (ch == '&') return new Symbol(Token.AND, "&", startRow, startCol, startRow, startCol + 1);
+		if (ch == '|') return new Symbol(Token.IOR, "|", startRow, startCol, startRow, startCol + 1);
+		if (ch == '!') return new Symbol(Token.NOT, "!", startRow, startCol, startRow, startCol + 1);
 
-		if (ch == '(') return new Symbol(Token.LPARENT, "(", startRow, startCol, endRow, endCol);
-		if (ch == ')') return new Symbol(Token.RPARENT, ")", startRow, startCol, endRow, endCol);
-		if (ch == '{') return new Symbol(Token.LBRACE, "{", startRow, startCol, endRow, endCol);
-		if (ch == '}') return new Symbol(Token.RBRACE, "}", startRow, startCol, endRow, endCol);
-		if (ch == '[') return new Symbol(Token.LBRACKET, "[", startRow, startCol, endRow, endCol);
-		if (ch == ']') return new Symbol(Token.RBRACKET, "]", startRow, startCol, endRow, endCol);
+		if (ch == '(') return new Symbol(Token.LPARENT, "(", startRow, startCol, startRow, startCol + 1);
+		if (ch == ')') return new Symbol(Token.RPARENT, ")", startRow, startCol, startRow, startCol + 1);
+		if (ch == '{') return new Symbol(Token.LBRACE, "{", startRow, startCol, startRow, startCol + 1);
+		if (ch == '}') return new Symbol(Token.RBRACE, "}", startRow, startCol, startRow, startCol + 1);
+		if (ch == '[') return new Symbol(Token.LBRACKET, "[", startRow, startCol, startRow, startCol + 1);
+		if (ch == ']') return new Symbol(Token.RBRACKET, "]", startRow, startCol, startRow, startCol + 1);
 
-		if (ch == '<') return new Symbol(Token.LTH, "<", startRow, startCol, endRow, endCol);
-		if (ch == '>') return new Symbol(Token.GTH, ">", startRow, startCol, endRow, endCol);
-		if (ch == '=') return new Symbol(Token.ASSIGN, "=", startRow, startCol, endRow, endCol);
+		if (ch == '<') return new Symbol(Token.LTH, "<", startRow, startCol, startRow, startCol + 1);
+		if (ch == '>') return new Symbol(Token.GTH, ">", startRow, startCol, startRow, startCol + 1);
+		if (ch == '=') return new Symbol(Token.ASSIGN, "=", startRow, startCol, startRow, startCol + 1);
 
-		if (ch == '.') return new Symbol(Token.DOT, ",", startRow, startCol, endRow, endCol);
-		if (ch == ':') return new Symbol(Token.COLON, ":", startRow, startCol, endRow, endCol);
-		if (ch == ';') return new Symbol(Token.SEMIC, ";", startRow, startCol, endRow, endCol);
-		if (ch == ',') return new Symbol(Token.COMMA, ",", startRow, startCol, endRow, endCol);
+		if (ch == '.') return new Symbol(Token.DOT, ",", startRow, startCol, startRow, startCol + 1);
+		if (ch == ':') return new Symbol(Token.COLON, ":", startRow, startCol, startRow, startCol + 1);
+		if (ch == ';') return new Symbol(Token.SEMIC, ";", startRow, startCol, startRow, startCol + 1);
+		if (ch == ',') return new Symbol(Token.COMMA, ",", startRow, startCol, startRow, startCol + 1);
 
 		return null;
 	}
@@ -241,13 +281,13 @@ public class LexAn {
 	 */
 	private Symbol isOperator2(int ch1, int ch2) {
 		if (ch1 == '=' && ch2 == '=') 
-			return new Symbol(Token.EQU, "EQU", startRow, startCol, endRow, endCol);
+			return new Symbol(Token.EQU, "EQU", startRow, startCol, startRow, startCol + 2);
 		if (ch1 == '!' && ch2 == '=')
-			return new Symbol(Token.NEQ, "NEQ", startRow, startCol, endRow, endCol);
+			return new Symbol(Token.NEQ, "NEQ", startRow, startCol, startRow, startCol + 2);
 		if (ch1 == '>' && ch2 == '=')
-			return new Symbol(Token.GEQ, "GEQ", startRow, startCol, endRow, endCol);
+			return new Symbol(Token.GEQ, "GEQ", startRow, startCol, startRow, startCol + 2);
 		if (ch1 == '<' && ch2 == '=')
-			return new Symbol(Token.LEQ, "LEQ", startRow, startCol, endRow, endCol);
+			return new Symbol(Token.LEQ, "LEQ", startRow, startCol, startRow, startCol + 2);
 		return null;
 	}
 	
