@@ -1,2 +1,14 @@
-typ x : arr[10] integer ;
-typ x : logical ; lolek
+abc		abc
+
+# type declarations
+typ int_arr : arr[10] integer;
+typ bool : logical;
+
+# variable declarations
+var x : bool;
+
+# function declarations
+fun square() : int =
+{ 
+	+x
+}

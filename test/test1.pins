@@ -1,7 +1,13 @@
-   0xFF;!=
-;n1234iz
-123499
-077
-1
-==
-'123'abc
+123
+'str'
+ident
+
+123'str'ident
+ident123'str'
+'str'123ident
+
+ident'str'
+
+123;123
+'str'==ident
+ident<=ident

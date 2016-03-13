@@ -36,7 +36,7 @@ public class LexAn {
 	private static Map<String, Integer> keywordsMap = null;
 
 	/**
-	 * Previous, current caracter.
+	 * Current caracter.
 	 */
 	private int nxtCh = -1;
 
@@ -45,6 +45,9 @@ public class LexAn {
 	 */
 	private int startCol = 1, startRow = 1;
 
+	/**
+	 * 
+	 */
 	private boolean dontRead = false;
 
 	/**
@@ -89,8 +92,9 @@ public class LexAn {
 		
 		try {
 			Symbol s = parseSymbol();
+			if (s == null) 
+				s = new Symbol(Token.EOF, "$", startRow, startCol, startRow, startCol + 1);
 
-			if (s == null) s = new Symbol(Token.EOF, "$", startRow, startCol, startRow, startCol + 1);
 			dump(s);
 			
 			return s;
@@ -102,6 +106,11 @@ public class LexAn {
 		return null;
 	}
 
+	/**
+	 * Parse next symbol in file. If symbol is not lexically correct, report error.
+	 * @return next symbol in file or null, if error detected
+	 * @throws IOException
+	 */
 	private Symbol parseSymbol() throws IOException {
 		while (true) {
 			startCol += word.length();
@@ -110,25 +119,23 @@ public class LexAn {
 			if (!dontRead) nxtCh = file.read();
 			else dontRead = false;
 			
-			if (nxtCh == -1) return new Symbol(Token.EOF, "$", 
-					startRow, startCol, startRow, startCol);
-			
 			/**
 			 * Skip characters while comment.
 			 */
-			if (nxtCh == '#') {
-				startRow++;
-				startCol = 1;
-				while (nxtCh != -1 && nxtCh != 10) nxtCh = file.read();
-			}
+			if (nxtCh == '#') while (nxtCh != -1 && nxtCh != 10) nxtCh = file.read();
+		
+			/**
+			 * Handle EOF.
+			 */
+			if (nxtCh == -1) return new Symbol(Token.EOF, "$", startRow, startCol, 
+					startRow, startCol);
 			
 			/**
 			 * Handle whitespaces.
 			 */
 			if (isWhiteSpace(nxtCh)) {
 				// update counters
-				if (nxtCh == 32 || nxtCh == 9)
-					startCol += (nxtCh == 32) ? 1 : 4;
+				if (nxtCh == 32 || nxtCh == 9) startCol += (nxtCh == 32) ? 1 : 4;
 				else if (nxtCh == 10) {
 					startCol = 1;
 					startRow++;
@@ -244,7 +251,9 @@ public class LexAn {
 	}
 	
 	/**
-	 * Check if character is a single-character operator.
+	 * Check if character is operator.
+	 * @param ch
+	 * @return detected operator or null, if no operator is detected
 	 */
 	private Symbol isOperator(int ch) {
 		if (ch == '+') return new Symbol(Token.ADD, "+", startRow, startCol, startRow, startCol + 1);
@@ -277,7 +286,10 @@ public class LexAn {
 	}
 	
 	/**
-	 * Check for double-character operators.
+	 * Check if this two characters are operator.
+	 * @param ch1
+	 * @param ch2
+	 * @return detected operator or null, if no operator is detected 
 	 */
 	private Symbol isOperator2(int ch1, int ch2) {
 		if (ch1 == '=' && ch2 == '=') 
@@ -291,19 +303,31 @@ public class LexAn {
 		return null;
 	}
 	
+	/**
+	 * @param ch character to be checked
+	 * @return true if character is a number; false otherwise
+	 */
 	private boolean isNumeric(int ch) {
 		return (ch >= '0' && ch <= '9');
 	}
 	
+	/**
+	 * @param ch character to be checked
+	 * @return true if character is whitespace; false otherwise
+	 */
 	private boolean isWhiteSpace(int ch) {
 		return (ch == 32 || ch == 9 || ch == 13 || ch == 10);
 	}
 	
+	/**
+	 * @param ch character to be checked
+	 * @return true if character is legal identifier character;
+	 * false otherwise
+	 */
 	private boolean isLegalId(int ch) {
-		return isNumeric(nxtCh) || 
+		return isNumeric(nxtCh) || nxtCh == '_' ||
 				(nxtCh >= 'a' && nxtCh <= 'z') ||
-				(nxtCh >= 'A' && nxtCh <= 'Z') ||
-				 nxtCh == '_';
+				(nxtCh >= 'A' && nxtCh <= 'Z');
 	}
 
 	/**
