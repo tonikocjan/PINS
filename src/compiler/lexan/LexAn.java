@@ -140,7 +140,7 @@ public class LexAn {
 					startCol = 1;
 					startRow++;
 				}
-				else continue;
+				continue;
 			}
 			
 			/**
@@ -169,7 +169,7 @@ public class LexAn {
 					}
 				}
 				// if last character of the word isn't single-quote, report error
-				if (word.charAt(word.length() - 1) != '\'') {
+				if (word.length() == 1 || word.charAt(word.length() - 1) != '\'') {
 					Report.report(new Position(startRow, startCol, startRow, startCol + word.length()),
 							"String literal not properly closed");
 					return null;
@@ -202,10 +202,10 @@ public class LexAn {
 					nxtCh = file.read();
 					
 					/**
-					 * Delemiters for identifiers are:
+					 * Delemiters for identifier are:
 					 * - whitespaces
 					 * - EOF
-					 * - operator and
+					 * - operator
 					 * - single-quote
 					 */
 					if (isOperator(nxtCh) != null || isWhiteSpace(nxtCh) || 
@@ -223,6 +223,9 @@ public class LexAn {
 						return new Symbol(token, word.toString(), 
 								startRow, startCol, startRow, startCol + word.length());
 					}
+					/**
+					 * If this is not legal identifier character, report error.
+					 */
 					if (!isLegalId(nxtCh)) {
 						Report.report(new Position(startRow, startCol, startRow, startCol + word.length() + 1), 
 								"Invalid token \"" + (char)nxtCh + "\" in identifier");
@@ -236,22 +239,33 @@ public class LexAn {
 			 */
 			Symbol op = isOperator(nxtCh);
 			if (op != null) {
+				/**
+				 * Also check if this character + next character is an operator.
+				 */
 				int tmpCh = file.read();
 				Symbol op2 = isOperator2(nxtCh, tmpCh);
 				if (op2 != null) {
 					startCol += 2;
 					return op2;
 				}
+				
 				dontRead = true;
 				nxtCh = tmpCh;
 				startCol++;
 				return op;
 			}
+			
+			/**
+			 * Unknown character. Report error.
+			 */
+			Report.report(new Position(startRow, startCol, startRow, startCol + word.length() + 1),
+					"Unknown token \"" + (char)nxtCh + "\", delete this token");
+			return null;
 		}
 	}
 	
 	/**
-	 * Check if character is operator.
+	 * Check if character is an operator.
 	 * @param ch
 	 * @return detected operator or null, if no operator is detected
 	 */
@@ -286,20 +300,20 @@ public class LexAn {
 	}
 	
 	/**
-	 * Check if this two characters are operator.
+	 * Check if this two characters are an operator.
 	 * @param ch1
 	 * @param ch2
 	 * @return detected operator or null, if no operator is detected 
 	 */
 	private Symbol isOperator2(int ch1, int ch2) {
 		if (ch1 == '=' && ch2 == '=') 
-			return new Symbol(Token.EQU, "EQU", startRow, startCol, startRow, startCol + 2);
+			return new Symbol(Token.EQU, "==", startRow, startCol, startRow, startCol + 2);
 		if (ch1 == '!' && ch2 == '=')
-			return new Symbol(Token.NEQ, "NEQ", startRow, startCol, startRow, startCol + 2);
+			return new Symbol(Token.NEQ, "!=", startRow, startCol, startRow, startCol + 2);
 		if (ch1 == '>' && ch2 == '=')
-			return new Symbol(Token.GEQ, "GEQ", startRow, startCol, startRow, startCol + 2);
+			return new Symbol(Token.GEQ, ">=", startRow, startCol, startRow, startCol + 2);
 		if (ch1 == '<' && ch2 == '=')
-			return new Symbol(Token.LEQ, "LEQ", startRow, startCol, startRow, startCol + 2);
+			return new Symbol(Token.LEQ, "<=", startRow, startCol, startRow, startCol + 2);
 		return null;
 	}
 	
@@ -321,8 +335,7 @@ public class LexAn {
 	
 	/**
 	 * @param ch character to be checked
-	 * @return true if character is legal identifier character;
-	 * false otherwise
+	 * @return true if character is legal identifier character; false otherwise
 	 */
 	private boolean isLegalId(int ch) {
 		return isNumeric(nxtCh) || nxtCh == '_' ||
