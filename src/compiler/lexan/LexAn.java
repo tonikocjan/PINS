@@ -120,7 +120,7 @@ public class LexAn {
 			else dontRead = false;
 			
 			/**
-			 * Skip characters while comment.
+			 * Skip characters after '#'.
 			 */
 			if (nxtCh == '#') while (nxtCh != -1 && nxtCh != 10) nxtCh = file.read();
 		
@@ -148,6 +148,7 @@ public class LexAn {
 			 */
 			if (nxtCh == '\'') {
 				word.append('\'');
+				boolean strClosed = false;
 				while (true) {
 					nxtCh = file.read();
 					if (nxtCh < 32 || nxtCh > 126) {
@@ -164,12 +165,13 @@ public class LexAn {
 						if (nxtCh == '\'') word.append((char)nxtCh);
 						else {
 							dontRead = true;
+							strClosed = true;
 							break;
 						}
 					}
 				}
 				// if last character of the word isn't single-quote, report error
-				if (word.length() == 1 || word.charAt(word.length() - 1) != '\'') {
+				if (!strClosed) {
 					Report.report(new Position(startRow, startCol, startRow, startCol + word.length()),
 							"String literal not properly closed");
 					return null;
