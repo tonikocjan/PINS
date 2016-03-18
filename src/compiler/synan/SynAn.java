@@ -51,7 +51,7 @@ public class SynAn {
 		parseDefinitions();
 
 		if (symbol.token != Token.EOF)
-			Report.report(symbol.position, "Syntax error!");
+			Report.error(symbol.position, "Syntax error!");
 	}
 	
 	private void parseDefinitions() {
@@ -70,10 +70,11 @@ public class SynAn {
 			break;
 		default:
 			if (symbol.token != Token.EOF)
-				error("Syntax error on token \"" + symbol.lexeme + "\", delete this token");
+				Report.error(symbol.position, 
+						"Syntax error on token \"" + symbol.lexeme + "\", delete this token");
 			else
-				error(previous, "Syntax error on token \"" + previous.lexeme + "\", delete this token");
-			return;
+				Report.error(previous.position, 
+						"Syntax error on token \"" + previous.lexeme + "\", delete this token");
 		}
 		skipSymbol();
 		parseDefinitions_();
@@ -88,7 +89,8 @@ public class SynAn {
 			parseDefinitions();
 			break;
 		default:
-			error(previous, "Syntax error on token \"" + previous.lexeme + "\", expected \";\" after this token");
+			Report.error(previous.position, 
+					"Syntax error on token \"" + previous.lexeme + "\", expected \";\" after this token");
 		}
 	}
 
@@ -99,11 +101,9 @@ public class SynAn {
 				parseType();
 				return;
 			}
-			error(previous, "Syntax error on token \"" + previous.lexeme + "\", expected \":\" after this token");
-			return;
+			Report.error(previous.position, "Syntax error on token \"" + previous.lexeme + "\", expected \":\" after this token");
 		}
-		error(previous, "Syntax error on token \"" + previous.lexeme + "\"; identifier expected");
-		return;
+		Report.error(previous.position, "Syntax error on token \"" + previous.lexeme + "\"; identifier expected");
 	}
 
 	private void parseFunDefinition() {
@@ -111,30 +111,21 @@ public class SynAn {
 			if (next().token == Token.LPARENT) {
 				skipSymbol();
 				parseParameters();
-				if (symbol.token != Token.EOF) {
-					if (next().token == Token.COLON) {
+				if (next().token == Token.COLON) {
+					skipSymbol();
+					parseType();
+					if (next().token == Token.ASSIGN) {
 						skipSymbol();
-						parseType();
-						if (symbol.token == Token.EOF) return;
-						
-						if (next().token == Token.ASSIGN) {
-							skipSymbol();
-							parseExpressions();
-							return;
-						}
-						error(previous, "Syntax error on token \"" + previous.lexeme + "\", exptected \"=\" after this token");
+//						parseExpressions();
 						return;
 					}
-					error(previous, "Syntax error on token \"" + previous.lexeme + "\", \":\" exptected after this token");
-					return;
+					Report.error(previous.position, "Syntax error on token \"" + previous.lexeme + "\", exptected \"=\" after this token");
 				}
-				error(previous, "Syntax error, insert \")\" to complete function declaration");
-				return;
+				Report.error(previous.position, "Syntax error on token \"" + previous.lexeme + "\", \":\" exptected after this token");
 			}
-			error(previous, "Syntax error on token \"" + previous.lexeme + "\", exptected \"(\" after this token");
-			return;
+			Report.error(previous.position, "Syntax error on token \"" + previous.lexeme + "\", exptected \"(\" after this token");
 		}
-		error(previous, "Syntax error on token \"" + previous.lexeme + "\", expected identifier after this token");
+		Report.error(previous.position, "Syntax error on token \"" + previous.lexeme + "\", expected identifier after this token");
 	}
 
 	private void parseVarDefinition() {
@@ -144,10 +135,10 @@ public class SynAn {
 				parseType();
 				return;
 			}
-			error(previous, "Syntax error on token \""+ previous.lexeme + "\", expected \":\" after this token");
+			Report.error(previous.position, "Syntax error on token \""+ previous.lexeme + "\", expected \":\" after this token");
 			return;
 		}
-		error(previous, "Syntax error on token \""+ previous.lexeme + "\", expected identifier after this token");
+		Report.error(previous.position, "Syntax error on token \""+ previous.lexeme + "\", expected identifier after this token");
 	}
 	
 	private void parseType() {
@@ -165,271 +156,41 @@ public class SynAn {
 						parseType();
 						return;
 					}
-					error("Syntax error, insert \"]\" to complete Dimensions");
-					break;
+					Report.error(symbol.position, "Syntax error, insert \"]\" to complete Dimensions");
 				}
-				error("Variable must provide array dimension expression");
-				break;
+				Report.error(symbol.position, "Variable must provide array dimension expression");
 			}
-			else error("Syntax error, insert \"[\"");
-			break;
+			Report.error(symbol.position, "Syntax error, insert \"[\"");
 		default:
-			error("Syntax error on token \"" + symbol.lexeme + "\", expected \"variable type\"");
+			Report.error(symbol.position, "Syntax error on token \"" + symbol.lexeme + "\", expected \"variable type\"");
 		}
 	}
 	
 	private void parseParameters() {
-		switch (symbol.token) {
-		case Token.IDENTIFIER:
+		if (symbol.token == Token.IDENTIFIER) {
 			if (next().token == Token.COLON) {
 				skipSymbol();
 				parseType();
+				skipSymbol();
+				parseParameters_();
 				return;
 			}
-			error("Synax error on token \"" + previous.lexeme + "\", expected \":\" after this token");
-			break;
+			Report.error(symbol.position, 
+					"Syntax error on token \"" + previous.lexeme + "\", expected \":\" after this token");
 		}
-//		skipSymbol();
-		parseParameters_();
+		Report.error(symbol.position, "Syntax error, expected paramater definition");
 	}
 	
 	private void parseParameters_() {
-		switch (symbol.token) {
-		case Token.COMMA:
-			parseParameters();
-			break;
-		case Token.RPARENT:
-			return;
-		}
-		error("Syntax error on token \"" + previous.lexeme + "\"");
-	}
-	
-	private void parseExpressions() {
-		parseExpression();
-		skipSymbol();
-		parseExpressions_();
-	}
-	
-	private void parseExpressions_() {
 		if (symbol.token == Token.COMMA) {
-			parseExpression();
-		}
-		//error(previous, "Error on token \"" + previous.lexeme + "\", expected \",\" after this token");
-	}
-	
-	private void parseExpression() {
-		parseLogicalIORExpression();
-		skipSymbol();
-		parseExpression_();
-	}
-	
-	private void parseExpression_() {
-		if (symbol.token == Token.LBRACE) {
-			if (next().token == Token.KW_WHERE) {
-				skipSymbol();
-				parseDefinitions();
-			}
-			error("Error on token \"" + symbol.token + "\", expected keyword \"WHERE\"");
-		}
-	}
-	
-	private void parseLogicalIORExpression() {
-		parseLogicalANDExpression();
-		skipSymbol();
-		parseLogicalIORExpression_();
-	}
-
-	private void parseLogicalIORExpression_() {
-		if (symbol.token == Token.IOR) {
 			skipSymbol();
-			parseLogicalIORExpression();
+			parseParameters();
 		}
+		else if (symbol.token != Token.RPARENT)
+			Report.error(symbol.position, 
+					"Syntax error, insert \")\" to complete function declaration");
 	}
 	
-	private void parseLogicalANDExpression() {
-		parseCmpExpression();
-		skipSymbol();
-		parseLogicalANDExpression_();
-	}
-	
-	private void parseLogicalANDExpression_() {
-		if (symbol.token == Token.AND) {
-			skipSymbol();
-			parseLogicalANDExpression();
-		}
-	}
-	
-	private void parseCmpExpression() {
-		parseAddExpression();
-		skipSymbol();
-		switch (symbol.token) {
-		case Token.EQU:
-		case Token.NEQ:
-		case Token.LEQ:
-		case Token.GEQ:
-		case Token.LTH:
-		case Token.GTH:
-			skipSymbol();
-			parseAddExpression();
-		}
-	}
-	
-	private void parseAddExpression() {
-		parseMulExpression();
-		skipSymbol();
-		parseAddExpression_();
-	}
-
-	private void parseAddExpression_() {
-		switch (symbol.token) {
-		case Token.ADD:
-		case Token.SUB:
-			skipSymbol();
-			parseAddExpression();
-		}
-	}
-	
-	private void parseMulExpression() {
-		parsePrefixExpression();
-		skipSymbol();
-		parseMulExpression_();
-	}
-	
-	private void parseMulExpression_() {
-		switch (symbol.token) {
-		case Token.MUL:
-		case Token.DIV:
-		case Token.MOD:
-			skipSymbol();
-			parseMulExpression();
-		}
-	}
-	
-	private void parsePrefixExpression() {
-		switch (symbol.token) {
-		case Token.ADD:
-		case Token.SUB:
-		case Token.NOT:
-			skipSymbol();
-			parsePostfixExpression();
-		default:
-			parsePostfixExpression();
-		}
-	}
-	
-	private void parsePostfixExpression() {
-		parseAtomExpression();
-		skipSymbol();
-		parsePostfixExpression_();
-	}
-	
-	private void parsePostfixExpression_() {
-		if (symbol.token == Token.LBRACKET) {
-			skipSymbol();
-			parseExpression();
-			if (next().token == Token.RBRACKET) {
-				skipSymbol();
-				parsePostfixExpression();
-			}
-			error(previous, "Error on token \"" + previous.lexeme + "\", expected \"]\" after this token");
-		}
-	}
-	
-	private void parseAtomExpression() {
-		switch (symbol.token) {
-		case Token.INT_CONST:
-		case Token.LOG_CONST:
-		case Token.STR_CONST:
-			return;
-		case Token.IDENTIFIER:
-			if (next().token == Token.LPARENT) {
-				skipSymbol();
-				parseExpressions();
-				if (next().token == Token.RPARENT) return;
-				error(previous, "Error on token \"" + previous.lexeme + "\", expected \")\" after this token");
-			}
-			return;
-		case Token.LBRACE:
-			if (next().token == Token.KW_IF) {
-				skipSymbol();
-				parseExpression();
-				if (symbol.token == Token.KW_THEN) {
-					skipSymbol();
-					parseExpression();
-					if (next().token == Token.RBRACE) return;
-					else if (symbol.token == Token.KW_ELSE) {
-						skipSymbol();
-						parseExpression();
-						if (next().token == Token.RBRACE) return;
-						error(previous, "Error on token \"" + previous.lexeme + "\", expected \"}\" after this token");
-						return;
-					}
-					error("Error on token \"" + symbol.lexeme + "\", delete this token");
-					return;
-				}
-				error("Error on token \"" + symbol.lexeme + "\"");
-				return;
-			}
-			if (symbol.token == Token.KW_WHILE) {
-				skipSymbol();
-				parseExpression();
-				if (next().token == Token.COLON) {
-					skipSymbol();
-					parseExpression();
-					if (next().token == Token.RBRACE) return;
-					error(previous, "Error on token \"" + previous.lexeme + "\", expected \"}\" after this token");
-					return;
-				}
-				error(previous, "Error on token \"" + previous.lexeme + "\", expected \":\" after this token");
-				return;
-			}
-			if (symbol.token == Token.KW_FOR) {
-				if (next().token == Token.IDENTIFIER) {
-					if (next().token == Token.ASSIGN) {
-						skipSymbol();
-						parseExpression();
-						if (next().token == Token.COMMA) {
-							skipSymbol();
-							parseExpression();
-							if (next().token == Token.COMMA) {
-								skipSymbol();
-								parseExpression();
-								if (next().token == Token.COLON) {
-									skipSymbol();
-									parseExpression();
-									if (next().token == Token.RBRACE) return;
-									error(previous, "Error on token \"" + previous.lexeme + "\", expected \"}\" to end for-loop definition");
-									return;
-								}
-								error(previous, "Error on token \"" + previous.lexeme + "\", expected \":\" after this token");
-								return;
-							}
-							error(previous, "Error on token \"" + previous.lexeme + "\", expected \",\" after this token");
-							return;
-						}
-						error(previous, "Error on token \"" + previous.lexeme + "\", expected \",\" after this token");
-						return;
-					}
-					error(previous, "Error on token \"" + previous.lexeme + "\", expected \"=\" after this token");
-					return;
-				}
-				error("Error on token \"" + symbol.lexeme + "\", expected identifier");
-				return;
-			}
-			skipSymbol();
-			parseExpression();
-			if (next().token == Token.ASSIGN) {
-				skipSymbol();
-				parseExpression();
-				if (next().token == Token.RBRACE) return;
-				error(previous, "Error on token \"" + previous.lexeme + "\", expected \"}\" after this token");
-				return;
-			}
-		default:
-			error("Error on token \"" + symbol.lexeme + "\", expected expression-definition after this token");
-		}
-	}
-
 	/**
 	 * 
 	 */
@@ -441,15 +202,6 @@ public class SynAn {
 	private Symbol next() {
 		skipSymbol();
 		return symbol;
-	}
-	
-	private void error(String err) {
-		error(symbol, err);
-	}
-	
-	private void error(Symbol s, String err) {
-		Report.report(s.position, err);
-		symbol = new Symbol(Token.EOF, "$", s.position);
 	}
 
 	/**
