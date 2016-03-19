@@ -1,12 +1,14 @@
 # type declarations
-typ int_arr : arr[10] integer;
-typ bool : logical;
+#typ int_arr : arr[10] integer;
+#typ bool : logical;
 
 # variable declarations
-var x : bool;
+#var x : bool;
 
 # function declarations
-fun square() : int =
-{ 
-	+x
-}
+fun fn(x : int, x : bool) : integer = {
+	if i >= 10 then { i = 10 }
+};
+
+# type definition
+typ char : integer
