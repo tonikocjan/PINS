@@ -58,19 +58,19 @@ public class SynAn {
 	private void parseDefinitions() {
 		switch (symbol.token) {
 		case Token.KW_TYP:
-			dump("definitions -> definition");
+			dump("definitions -> definition definition'");
 			dump("definition -> type_definition");
 			skipSymbol();
 			parseTypeDefinition();
 			break;
 		case Token.KW_FUN:
-			dump("definitions -> definition");
-			dump("definition -> fun_definition");
+			dump("definitions -> definition definition'");
+			dump("definition -> function_definition");
 			skipSymbol();
 			parseFunDefinition();
 			break;
 		case Token.KW_VAR:
-			dump("definitions -> definition");
+			dump("definitions -> definition definition'");
 			dump("definition -> var_definition");
 			skipSymbol();
 			parseVarDefinition();
@@ -90,12 +90,14 @@ public class SynAn {
 	private void parseDefinitions_() {
 		switch (symbol.token) {
 		case Token.EOF:
-			dump("definitions -> $");
+			dump("definitions' -> $");
 			break;
 		case Token.RBRACE:
+			dump("definitions' -> e");
 			skipSymbol();
 			break;
 		case Token.SEMIC:
+			dump("definitions' -> ; definitions");
 			skipSymbol();
 			parseDefinitions();
 			break;
@@ -108,6 +110,7 @@ public class SynAn {
 	private void parseTypeDefinition() {
 		if (symbol.token == Token.IDENTIFIER) {
 			if (next().token == Token.COLON) {
+				dump("type_definition -> typ identifier : type");
 				skipSymbol();
 				parseType();
 				return;
@@ -120,6 +123,7 @@ public class SynAn {
 	private void parseFunDefinition() {
 		if (symbol.token == Token.IDENTIFIER) {
 			if (next().token == Token.LPARENT) {
+				dump("function_definition -> fun identifier ( parameters ) : type = expression");
 				skipSymbol();
 				parseParameters();
 				if (symbol.token == Token.COLON) {
@@ -142,6 +146,7 @@ public class SynAn {
 	private void parseVarDefinition() {
 		if (symbol.token == Token.IDENTIFIER) {
 			if (next().token == Token.COLON) {
+				dump("var_definition -> var identifier : type");
 				skipSymbol();
 				parseType();
 				return;
@@ -155,10 +160,16 @@ public class SynAn {
 		switch (symbol.token) {
 		case Token.IDENTIFIER:
 			dump("type -> identifier");
+			skipSymbol();
+			break;
 		case Token.LOGICAL:
 			dump("type -> logical");
+			skipSymbol();
+			break;
 		case Token.INTEGER:
 			dump("type -> integer");
+			skipSymbol();
+			break;
 		case Token.STRING:
 			dump("type -> string");
 			skipSymbol();
@@ -183,9 +194,10 @@ public class SynAn {
 	}
 	
 	private void parseParameters() {
-		dump("parameters -> parameter");
+		dump("parameters -> parameter parameters'");
 		if (symbol.token == Token.IDENTIFIER) {
 			if (next().token == Token.COLON) {
+				dump("parameter -> identifier : type");
 				skipSymbol();
 				parseType();
 				parseParameters_();
@@ -199,7 +211,7 @@ public class SynAn {
 	
 	private void parseParameters_() {
 		if (symbol.token == Token.COMMA) {
-			dump("parameters -> parameter");
+			dump("parameters' -> parameters");
 			skipSymbol();
 			parseParameters();
 			return;
@@ -207,11 +219,11 @@ public class SynAn {
 		else if (symbol.token != Token.RPARENT)
 			Report.error(symbol.position, 
 					"Syntax error, insert \")\" to complete function declaration");
+		dump("parameters' -> e");
 		skipSymbol();
 	}
 	
 	private void parseExpressions() {
-		dump("expressions -> expression");
 		switch (symbol.token) {
 		case Token.ADD:
 		case Token.SUB:
@@ -222,32 +234,34 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+			dump("expressions -> expression expression'");
 			parseExpression();
 			parseExpressions_();
 			break;
 		default:
 			Report.error(symbol.position,
-					"Syntax error on token \"" + symbol.lexeme + "\", delete this token");
+					"Syntax error on token \"" + previous.lexeme + "\", delete this token");
 		}
 	}
 	
 	private void parseExpressions_() {
 		switch (symbol.token) {
 		case Token.COMMA:
-			dump("expressions -> expression");
+			dump("expressions' -> , expression expression'");
 			skipSymbol();
 			parseExpressions();
 			break;
 		case Token.RPARENT:
+			dump("expressions' -> e");
+			skipSymbol();
 			break;
 		default:
 			Report.error(symbol.position, 
-					"Syntax error expressions_");
+					"Syntax error on token \"" + previous.lexeme + "\", expected \",\" or \")\" to end expression");
 		}
 	}
 	
 	private void parseExpression() {
-		dump("expression -> logical_ior_expression");
 		switch (symbol.token) {
 		case Token.ADD:
 		case Token.SUB:
@@ -258,6 +272,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+			dump("expression -> logical_ior_expression");
 			parseIorExpression();
 			parseExpression_();
 			break;
@@ -268,10 +283,10 @@ public class SynAn {
 	}
 	
 	private void parseExpression_() {
-		dump("expression -> logical_ior_expression { WHERE definitions}");
 		switch (symbol.token) {
 		case Token.LBRACE:
 			if (next().token == Token.KW_WHERE) {
+				dump("expression' ->  { WHERE definitions }");
 				skipSymbol();
 				parseDefinitions();
 				return;
@@ -289,6 +304,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
+			dump("expression' -> e");
 			break;
 		default:
 			Report.error(symbol.position, 
@@ -297,7 +313,6 @@ public class SynAn {
 	}
 	
 	private void parseIorExpression() {
-		dump("logical_ior_expression -> logical_and_expression");
 		switch (symbol.token) {
 		case Token.ADD:
 		case Token.SUB:
@@ -308,6 +323,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+			dump("logical_ior_expression -> logical_and_expression logical_ior_expression'");
 			parseAndExpression();
 			parseIorExpression_();
 			break;
@@ -320,6 +336,7 @@ public class SynAn {
 	private void parseIorExpression_() {
 		switch (symbol.token) {
 		case Token.IOR:
+			dump("logical_ior_expression' -> | log_ior_expression");
 			skipSymbol();
 			parseIorExpression();
 			break;
@@ -333,6 +350,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
+			dump("logical_ior_expression' -> e");
 			break;
 		default:
 			Report.error(symbol.position, 
@@ -351,7 +369,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
-			dump("logical_and_expression -> logical_cmp_expression");
+			dump("logical_and_expression -> logical_cmp_expression logical_and_expression'");
 			parseCmpExpression();
 			parseAndExpression_();
 			break;
@@ -364,6 +382,7 @@ public class SynAn {
 	private void parseAndExpression_() {
 		switch (symbol.token) {
 		case Token.AND:
+			dump("logical_and_expression' -> & logical_and_expression");
 			skipSymbol();
 			parseAndExpression();
 			break;
@@ -378,6 +397,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
+			dump("logical_and_expression' -> e");
 			break;
 		default:
 			Report.error(symbol.position, 
@@ -396,6 +416,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+//			dump("cmp_expression -> add_expression cmp_expression'");
 			parseAddExpression();
 			parseCmpExpression_();
 			break;
@@ -419,6 +440,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
+			dump("cmp_expression' -> e");
 			break;
 		default:
 			Report.error(symbol.position, 
@@ -437,6 +459,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+			dump("add_expression -> mul_expression add_expression'");
 			parseMulExpression();
 			parseAddExpression_();
 			break;
@@ -460,6 +483,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
+			dump("add_expression' -> e");
 			break;
 		case Token.EQU:
 		case Token.NEQ:
@@ -471,10 +495,16 @@ public class SynAn {
 			/**
 			 *  TODO al je add al cmp expression
 			 */
-			parseCmpExpression();
+			dump("cmp_expression -> add_expression == add_expression");
+			parseAddExpression();
 			break;
 		case Token.ADD:
+			dump("add_expression' -> + add_expression'");
+			skipSymbol();
+			parseAddExpression();
+			break;
 		case Token.SUB:
+			dump("add_expression' -> - add_expression'");
 			skipSymbol();
 			parseAddExpression();
 			break;
@@ -495,6 +525,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+			dump("mul_expression -> prefix_expression mul_expression'");
 			parsePrefixExpression();
 			parseMulExpression_();
 			break;
@@ -518,6 +549,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
+			dump("mul_expression' -> e");
 			break;
 		case Token.EQU:
 		case Token.NEQ:
@@ -529,16 +561,19 @@ public class SynAn {
 			/**
 			 *  TODO al je add al cmp expression
 			 */
-			parseCmpExpression();
+			dump("cmp_expression -> add_expression != add_expression");
+			parseAddExpression();
 			break;
 		case Token.ADD:
 		case Token.SUB:
+			dump("nevem todo");
 			skipSymbol();
 			parseAddExpression();
 			break;
 		case Token.MUL:
 		case Token.DIV:
 		case Token.MOD:
+			dump("mul_expression' -> mul_expression");
 			skipSymbol();
 			parseMulExpression();
 			break;
@@ -551,10 +586,19 @@ public class SynAn {
 	private void parsePrefixExpression() {
 		switch (symbol.token) {
 		case Token.ADD:
-		case Token.SUB:
-		case Token.NOT:
+			dump("prefix_expression -> + prefix_expression");
 			skipSymbol();
-			parsePostfixExpression();
+			parsePrefixExpression();
+			break;
+		case Token.SUB:
+			dump("prefix_expression -> - prefix_expression");
+			skipSymbol();
+			parsePrefixExpression();
+			break;
+		case Token.NOT:
+			dump("prefix_expression -> ! prefix_expression");
+			skipSymbol();
+			parsePrefixExpression();
 			break;
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
@@ -562,6 +606,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+			dump("prefix_expression -> postfix_expression");
 			parsePostfixExpression();
 			break;
 		default:
@@ -578,6 +623,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
+			dump("postfix_expression -> atom_expression postfix_expression'");
 			parseAtomExpression();
 			parsePostfixExpression_();
 			break;
@@ -601,6 +647,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
+			dump("postfix_expression' -> e");
 			break;
 		case Token.EQU:
 		case Token.NEQ:
@@ -611,8 +658,11 @@ public class SynAn {
 			skipSymbol();
 			/**
 			 *  TODO al je add al cmp expression
+			 *  vprašej profesorja kaj tukaj izpisat
+			 *  add_expression -> add_expression == add_expression ??
 			 */
-			parseCmpExpression();
+			dump("1234567");
+			parseAddExpression();
 			break;
 		case Token.ADD:
 		case Token.SUB:
@@ -626,10 +676,11 @@ public class SynAn {
 			parseMulExpression();
 			break;
 		case Token.LBRACKET:
+			dump("postfix_expression' -> [ expression ]");
 			skipSymbol();
 			parseExpression();
 			if (symbol.token != Token.RBRACKET)
-				Report.report(previous.position, 
+				Report.error(previous.position, 
 						"Syntax error, insert \"]\"");
 			break;
 		default:
@@ -641,8 +692,15 @@ public class SynAn {
 	private void parseAtomExpression() {
 		switch (symbol.token) {
 		case Token.LOG_CONST:
+			dump("atom_expression -> log_const");
+			skipSymbol();
+			break;
 		case Token.INT_CONST:
+			dump("atom_expression -> int_const");
+			skipSymbol();
+			break;
 		case Token.STR_CONST:
+			dump("atom_expression -> str_const");
 			skipSymbol();
 			break;
 		case Token.LBRACE:
@@ -650,21 +708,19 @@ public class SynAn {
 			parseAtomExprBrace();
 			break;
 		case Token.LPARENT:
+			dump("atom_expression -> ( expressions )");
 			skipSymbol();
 			parseExpressions();
-			if (symbol.token != Token.RPARENT)
-				Report.report(symbol.position, 
-						"Syntax error on token \"" + previous.lexeme + "\", expected \"]\"");
 			break;
 		case Token.IDENTIFIER:
 			skipSymbol();
 			if (symbol.token == Token.LPARENT) {
-				parseExpressions();
-				if (symbol.token != Token.RPARENT)
-					Report.report(symbol.position, 
-							"Syntax error on token \"" + previous.lexeme + "\", expected \"]\"");
+				dump("atom_expression -> identifier ( expressions )");
 				skipSymbol();
+				parseExpressions();
 			}
+			else
+				dump("atom_expression -> identifier");
 			break;
 		default:
 			Report.error(symbol.position, 
@@ -673,11 +729,19 @@ public class SynAn {
 	}
 	
 	private void parseAtomExprBrace() {
-		if (symbol.token == Token.KW_IF) parseIf();
-		else if (symbol.token == Token.KW_WHILE) parseWhileLoop();
-		else if (symbol.token == Token.KW_FOR) parseForLoop();
+		if (symbol.token == Token.KW_IF) {
+			parseIf();
+		}
+		else if (symbol.token == Token.KW_WHILE) {			
+			dump("atom_expression -> { while expression : expression }");
+			parseWhileLoop();
+		}
+		else if (symbol.token == Token.KW_FOR) {
+			dump("atom_expression -> { for identifier = expression, expression, expression : expression }");
+			parseForLoop();
+		}
 		else {
-			// else
+			dump("atom_expression -> { expression = expression }");
 			parseExpression();
 			if (symbol.token == Token.ASSIGN) {
 				skipSymbol();
@@ -748,6 +812,7 @@ public class SynAn {
 	
 	private void parseIf() {
 		if (symbol.token == Token.KW_IF) {
+			dump("atom_expression -> { if expression then expression }");
 			skipSymbol();
 			parseExpression();
 			if (symbol.token == Token.KW_THEN) {
@@ -757,6 +822,7 @@ public class SynAn {
 					skipSymbol();
 					parseExpression();
 				}
+				
 				if (symbol.token == Token.RBRACE) return;
 
 				Report.error(symbol.position, 

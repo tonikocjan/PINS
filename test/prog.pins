@@ -1,14 +1,25 @@
 # type declarations
-#typ int_arr : arr[10] integer;
-#typ bool : logical;
+typ int_arr : arr[10] integer;
+typ bool : logical;
 
 # variable declarations
-#var x : bool;
+var x : bool;
 
 # function declarations
-fun fn(x : int, x : bool) : integer = {
-	if i >= 10 then { i = 10 }
-};
+fun fn(x : int, a : bool) : integer = (
+	{ if x > 10 & a == true then 
+	(
+		printf ( 'danes je lep dan' )
+	)},
+	{ x = 10 * 10 },
+	(((((((x <= (!10 * --10))))))))
+);
+
+fun main (argv : string, argc : int) : integer = (
+	
+	return ( EXIT_SUCCESS )
+);
+
 
 # type definition
 typ char : integer
