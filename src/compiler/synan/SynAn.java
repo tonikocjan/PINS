@@ -682,6 +682,7 @@ public class SynAn {
 			if (symbol.token != Token.RBRACKET)
 				Report.error(previous.position, 
 						"Syntax error, insert \"]\"");
+			skipSymbol();
 			break;
 		default:
 			Report.error(symbol.position, 
