@@ -345,6 +345,7 @@ public class SynAn {
 		case Token.RPARENT:
 		case Token.ASSIGN:
 		case Token.RBRACE:
+		case Token.LBRACE:
 		case Token.RBRACKET:
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
@@ -392,6 +393,7 @@ public class SynAn {
 		case Token.RPARENT:
 		case Token.ASSIGN:
 		case Token.RBRACE:
+		case Token.LBRACE:
 		case Token.RBRACKET:
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
@@ -435,6 +437,7 @@ public class SynAn {
 		case Token.RPARENT:
 		case Token.ASSIGN:
 		case Token.RBRACE:
+		case Token.LBRACE:
 		case Token.RBRACKET:
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
@@ -478,6 +481,7 @@ public class SynAn {
 		case Token.RPARENT:
 		case Token.ASSIGN:
 		case Token.RBRACE:
+		case Token.LBRACE:
 		case Token.RBRACKET:
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
@@ -492,10 +496,6 @@ public class SynAn {
 		case Token.GEQ:
 		case Token.LEQ:
 			skipSymbol();
-			/**
-			 *  TODO al je add al cmp expression
-			 */
-			dump("cmp_expression -> add_expression == add_expression");
 			parseAddExpression();
 			break;
 		case Token.ADD:
@@ -544,6 +544,7 @@ public class SynAn {
 		case Token.RPARENT:
 		case Token.ASSIGN:
 		case Token.RBRACE:
+		case Token.LBRACE:
 		case Token.RBRACKET:
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
@@ -558,9 +559,6 @@ public class SynAn {
 		case Token.GEQ:
 		case Token.LEQ:
 			skipSymbol();
-			/**
-			 *  TODO al je add al cmp expression
-			 */
 			dump("cmp_expression -> add_expression != add_expression");
 			parseAddExpression();
 			break;
@@ -642,6 +640,7 @@ public class SynAn {
 		case Token.RPARENT:
 		case Token.ASSIGN:
 		case Token.RBRACE:
+		case Token.LBRACE:
 		case Token.RBRACKET:
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
@@ -657,7 +656,6 @@ public class SynAn {
 		case Token.LEQ:
 			skipSymbol();
 			/**
-			 *  TODO al je add al cmp expression
 			 *  vprašej profesorja kaj tukaj izpisat
 			 *  add_expression -> add_expression == add_expression ??
 			 */

@@ -1,12 +1,16 @@
-# type declarations
+# type definitions
 typ int_arr : arr[10] integer;
 typ bool : logical;
 
-# variable declarations
+# variable definitions
 var x : bool;
 
-# function declarations
+# function definitions
 fun fn(x : int, a : bool) : integer = (
+	# expression { where definitions }
+	x { where 
+		var x : integer
+	},
 	{ if x > 10 & a == true then 
 	(
 		printf ( 'danes je lep dan' ),
@@ -16,11 +20,29 @@ fun fn(x : int, a : bool) : integer = (
 	(((((((x <= (!10 * --10))))))))
 );
 
+# yet another function definition
 fun main (argv : arr[10] string, argc : int) : integer = (
 	printf ('prvi argument tabele = ' + argv[0]),
 	return ( EXIT_SUCCESS )
 );
 
+# while for if
+fun test ( void : void ) : void = (
+	# čudna for zanka ^.^
+	{ for i = (5 - 5), i <= (20 * 3 - -2), {i = i + 1} : 
+		(
+			printf ( i )
+		)
+	},
+	
+	# stesteram še while
+	{ while x <= 10 : x },
+	
+	# if then
+	{ if !a > -+!x + y then hello_world },
+	# if then else
+	{ if a then b else c } 
+);
 
 # type definition
 typ char : integer
