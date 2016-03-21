@@ -531,7 +531,7 @@ public class SynAn {
 			break;
 		default:
 			Report.error(symbol.position, 
-					"Syntax error on token \"" + symbol.lexeme + "\", delete this token");
+					"Syntax error on token \"" + previous.lexeme + "\", expected prefix expression");
 		}
 	}
 

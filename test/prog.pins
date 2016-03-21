@@ -17,12 +17,12 @@ fun fn(x : int, a : bool) : integer = (
 		'se en expression v if stavku'
 	)},
 	{ x = 10 * 10 },
-	(((((((x <= (!10 * --10))))))))
+	(((((((x <= (!10 * --10 | a & b))))))))
 );
 
 # yet another function definition
 fun main (argv : arr[10] string, argc : int) : integer = (
-	printf ('prvi argument tabele = ' + argv[0]),
+	printf ('prvi argument tabele = ' + argv[5 * -5]),
 	return ( EXIT_SUCCESS )
 );
 
