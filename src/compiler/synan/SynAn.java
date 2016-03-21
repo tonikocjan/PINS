@@ -41,6 +41,8 @@ public class SynAn {
 	 * Opravi sintaksno analizo.
 	 */
 	public void parse() {
+		if (symbol == null) Report.error("Error accessing LexAn");
+		
 		parseSource();
 	}
 
@@ -52,7 +54,7 @@ public class SynAn {
 		parseDefinitions();
 
 		if (symbol.token != Token.EOF)
-			Report.error(symbol.position, "Syntax error!");
+			Report.error(symbol.position, "Syntax error on token \"" + previous.lexeme + "\"");
 	}
 	
 	private void parseDefinitions() {
@@ -103,7 +105,7 @@ public class SynAn {
 			break;
 		default:
 			Report.error(symbol.position, 
-					"Syntax error on token \"" + symbol.lexeme + "\", delete this token");
+					"Syntax error on token \"" + previous.lexeme + "\", expected \";\" or \"}\" after this token");
 		}
 	}
 
@@ -806,7 +808,7 @@ public class SynAn {
 			Report.error(symbol.position, 
 					"Syntax error on token \"" + previous.lexeme + "\", expected \":\" after this token");
 		}
-		Report.report(symbol.position, "Syntax error, expected keyword \"while\"");
+		Report.error(symbol.position, "Syntax error, expected keyword \"while\"");
 	}
 	
 	private void parseIf() {
@@ -844,7 +846,7 @@ public class SynAn {
 		skipSymbol();
 		return symbol;
 	}
-
+	
 	/**
 	 * Izpise produkcijo v datoteko z vmesnimi rezultati.
 	 * 
