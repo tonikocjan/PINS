@@ -28,14 +28,14 @@ fun main (argv : arr[10] string, argc : int) : integer = (
 
 # while for if
 fun test ( void : void ) : void = (
-	# čudna for zanka ^.^
+	# cudna for zanka ^.^
 	{ for i = (5 - 5), i <= (20 * 3 - -2), {i = i + 1} : 
 		(
 			printf ( i )
 		)
 	},
 	
-	# stesteram še while
+	# stesteram se while
 	{ while x <= 10 : x },
 	
 	# if then

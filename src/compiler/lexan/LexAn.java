@@ -77,7 +77,7 @@ public class LexAn {
 				keywordsMap.put(keywords[i], i + 30);
 			
 		} catch (FileNotFoundException e) {
-			Report.report("File [ " + sourceFileName + " ] does not exist! Exiting.");
+			Report.error("File [ " + sourceFileName + " ] does not exist! Exiting.");
 		}
 	}
 
@@ -100,7 +100,7 @@ public class LexAn {
 			return s;
 
 		} catch (IOException e) {
-			Report.report("Error while parsing input file! Exiting ...");
+			Report.error("Error while parsing input file! Exiting ...");
 		}
 
 		return null;
@@ -122,13 +122,18 @@ public class LexAn {
 			/**
 			 * Skip characters after '#'.
 			 */
-			if (nxtCh == '#') while (nxtCh != -1 && nxtCh != 10) nxtCh = file.read();
+			if (nxtCh == '#') 
+				while (nxtCh != -1 && nxtCh != 10) {
+					nxtCh = file.read();
+					if ((nxtCh < 32 || nxtCh > 126) && !isWhiteSpace(nxtCh))
+						Report.error(new Position(startRow, startCol), "Invalid token in comment");
+				}
 		
 			/**
 			 * Handle EOF.
 			 */
-			if (nxtCh == -1) return new Symbol(Token.EOF, "$", startRow, startCol, 
-					startRow, startCol);
+			if (nxtCh == -1) 
+				return new Symbol(Token.EOF, "$", startRow, startCol, startRow, startCol);
 			
 			/**
 			 * Handle whitespaces.
@@ -153,9 +158,8 @@ public class LexAn {
 					nxtCh = file.read();
 					if (nxtCh < 32 || nxtCh > 126) {
 						if (isWhiteSpace(nxtCh) || nxtCh == -1) break;
-						Report.report(new Position(startRow, startCol, startRow, startCol + word.length() + 1), 
+						Report.error(new Position(startRow, startCol, startRow, startCol + word.length() + 1), 
 								"Invalid token in string constant");
-						return null;
 					}
 					
 					word.append((char)nxtCh);
@@ -172,9 +176,8 @@ public class LexAn {
 				}
 				// if last character of the word isn't single-quote, report error
 				if (!strClosed) {
-					Report.report(new Position(startRow, startCol, startRow, startCol + word.length()),
+					Report.error(new Position(startRow, startCol, startRow, startCol + word.length()),
 							"String literal not properly closed");
-					return null;
 				}
 				
 				return new Symbol(Token.STR_CONST, word.toString(), 
@@ -228,11 +231,9 @@ public class LexAn {
 					/**
 					 * If this is not legal identifier character, report error.
 					 */
-					if (!isLegalId(nxtCh)) {
-						Report.report(new Position(startRow, startCol, startRow, startCol + word.length() + 1), 
+					if (!isLegalId(nxtCh))
+						Report.error(new Position(startRow, startCol, startRow, startCol + word.length() + 1), 
 								"Invalid token \"" + (char)nxtCh + "\" in identifier");
-						return null;
-					}
 				}
 			}
 			
@@ -260,9 +261,8 @@ public class LexAn {
 			/**
 			 * Unknown character. Report error.
 			 */
-			Report.report(new Position(startRow, startCol, startRow, startCol + word.length() + 1),
+			Report.error(new Position(startRow, startCol, startRow, startCol + word.length() + 1),
 					"Unknown token \"" + (char)nxtCh + "\", delete this token");
-			return null;
 		}
 	}
 	

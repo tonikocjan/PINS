@@ -1,13 +1,32 @@
-123
-'str'
-ident
+# function definitions
+fun fn(x : int, a : bool) : integer = (
+	# expression { where definitions }
+	x { where 
+		var x : integer
+	},
+	{ if x > 10 & a == true then 
+	(
+		printf ( 'danes je lep dan' ),
+		'se en expression v if stavku'
+	)},
+	{ x = 10 * 10 },
+	(((((((x <= (!10 * --10 | a & b))))))))
+);
 
-123'str'ident
-ident123'str'
-'str'123ident
+# yet another function definition
+fun main (argv : arr[10] string, argc : int) : integer = (
+	printf ('prvi argument tabele = ' + argv[5 * -5]),
+	return ( EXIT_SUCCESS )
+);
 
-ident'str'
+fun hehe( void : void ) : void = (
+	i + ((i + j) { where var i : integer })
+	{
+		where
+		var i : integer;
+		var j : integer
+	}
+);
 
-123;123
-'str'==ident
-ident<=ident
+# type definition
+typ char : integer

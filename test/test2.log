@@ -1,7 +1,22 @@
-[1:1-1:5] STR_CONST:''''
-[2:1-2:11] STR_CONST:'abc  cba'
-[4:1-4:21] STR_CONST:'abc#to ni komentar'
-[5:1-5:11] STR_CONST:'123''abc'
-[7:1-7:2] INT_CONST:0
-[7:2-7:5] IDENTIFIER:xFF
-EOF:$
+source -> definitions
+definitions -> definition definition'
+definition -> type_definition
+type_definition -> typ identifier : type
+type -> arr [ int_const ] type
+type -> integer
+definitions' -> ; definitions
+definitions -> definition definition'
+definition -> type_definition
+type_definition -> typ identifier : type
+type -> logical
+definitions' -> ; definitions
+definitions -> definition definition'
+definition -> var_definition
+var_definition -> var identifier : type
+type -> identifier
+definitions' -> ; definitions
+definitions -> definition definition'
+definition -> var_definition
+var_definition -> var identifier : type
+type -> identifier
+definitions' -> $

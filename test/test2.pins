@@ -1,6 +1,7 @@
-''''
-'abc  cba'#to je komentar
-'abc#to ni komentar'
-'123''abc'
+# type definitions
+typ int_arr : arr[10] integer;
+typ bool : logical;
 
-0xFF
+# variable definitions
+var x : bool;
+var rollo : ragnar
