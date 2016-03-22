@@ -372,7 +372,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
-			dump("logical_and_expression -> logical_cmp_expression logical_and_expression'");
+			dump("logical_and_expression -> logical_compare_expression logical_and_expression'");
 			parseCmpExpression();
 			parseAndExpression_();
 			break;
@@ -420,7 +420,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
-//			dump("cmp_expression -> add_expression cmp_expression'");
+			dump("compare_expression -> add_expression compare_expression'");
 			parseAddExpression();
 			parseCmpExpression_();
 			break;
@@ -445,7 +445,37 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
-			dump("cmp_expression' -> e");
+			dump("compare_expression' -> e");
+			break;		
+		case Token.EQU:
+			dump("compare_expression' -> == compare_expression");
+			skipSymbol();
+			parseCmpExpression();
+			break;
+		case Token.NEQ:
+			dump("compare_expression' -> != compare_expression");
+			skipSymbol();
+			parseCmpExpression();
+			break;
+		case Token.GTH:
+			dump("compare_expression' -> > compare_expression");
+			skipSymbol();
+			parseCmpExpression();
+			break;
+		case Token.LTH:
+			dump("compare_expression' -> < compare_expression");
+			skipSymbol();
+			parseCmpExpression();
+			break;
+		case Token.GEQ:
+			dump("compare_expression' -> >= compare_expression");
+			skipSymbol();
+			parseCmpExpression();
+			break;
+		case Token.LEQ:
+			dump("compare_expression' -> <= compare_expression");
+			skipSymbol();
+			parseCmpExpression();
 			break;
 		default:
 			Report.error(symbol.position, 
@@ -464,7 +494,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
-			dump("add_expression -> mul_expression add_expression'");
+			dump("add_expression -> multiplicative_expression add_expression'");
 			parseMulExpression();
 			parseAddExpression_();
 			break;
@@ -497,8 +527,8 @@ public class SynAn {
 		case Token.LTH:
 		case Token.GEQ:
 		case Token.LEQ:
-			skipSymbol();
-			parseAddExpression();
+//			skipSymbol();
+//			parseAddExpression();
 			break;
 		case Token.ADD:
 			dump("add_expression' -> + add_expression'");
@@ -527,7 +557,7 @@ public class SynAn {
 		case Token.LBRACE:
 		case Token.LPARENT:
 		case Token.IDENTIFIER:
-			dump("mul_expression -> prefix_expression mul_expression'");
+			dump("multiplicative_expression -> prefix_expression multiplicative_expression'");
 			parsePrefixExpression();
 			parseMulExpression_();
 			break;
@@ -552,7 +582,7 @@ public class SynAn {
 		case Token.KW_ELSE:
 		case Token.COMMA:
 		case Token.EOF:
-			dump("mul_expression' -> e");
+			dump("multiplicative_expression' -> e");
 			break;
 		case Token.EQU:
 		case Token.NEQ:
@@ -560,9 +590,6 @@ public class SynAn {
 		case Token.LTH:
 		case Token.GEQ:
 		case Token.LEQ:
-			skipSymbol();
-			dump("cmp_expression -> add_expression != add_expression");
-			parseAddExpression();
 			break;
 		case Token.ADD:
 		case Token.SUB:
@@ -573,7 +600,7 @@ public class SynAn {
 		case Token.MUL:
 		case Token.DIV:
 		case Token.MOD:
-			dump("mul_expression' -> mul_expression");
+			dump("multiplicative_expression' -> multiplicative_expression");
 			skipSymbol();
 			parseMulExpression();
 			break;
@@ -656,13 +683,6 @@ public class SynAn {
 		case Token.LTH:
 		case Token.GEQ:
 		case Token.LEQ:
-			skipSymbol();
-			/**
-			 *  vprašej profesorja kaj tukaj izpisat
-			 *  add_expression -> add_expression == add_expression ??
-			 */
-			dump("1234567");
-			parseAddExpression();
 			break;
 		case Token.ADD:
 		case Token.SUB:
@@ -812,26 +832,36 @@ public class SynAn {
 	}
 	
 	private void parseIf() {
+		// TODO
 		if (symbol.token == Token.KW_IF) {
-			dump("atom_expression -> { if expression then expression }");
+			dump("atom_expression -> if_expression if_expression'");
 			skipSymbol();
 			parseExpression();
 			if (symbol.token == Token.KW_THEN) {
 				skipSymbol();
 				parseExpression();
-				if (symbol.token == Token.KW_ELSE) {
-					skipSymbol();
-					parseExpression();
-				}
-				
-				if (symbol.token == Token.RBRACE) return;
-
-				Report.error(symbol.position, 
-						"Syntax error on token \"" + symbol.lexeme + "\", expected \"}\"");
+				parseIf_();
+				return;
 			}
 			Report.error(symbol.position, 
 					"Syntax error on token \"" + previous.lexeme + "\", expected keyword \"then\" after this token");
 		}
+	}
+	
+	private void parseIf_() {
+		if (symbol.token == Token.KW_ELSE) {
+			dump("if_expression' -> else expression }");
+			skipSymbol();
+			parseExpression();
+		}
+		
+		if (symbol.token == Token.RBRACE) {
+			dump("if_expression' -> }");
+			return;
+		}
+
+		Report.error(symbol.position, 
+				"Syntax error on token \"" + symbol.lexeme + "\", expected \"}\"");
 	}
 	
 	/**

@@ -44,5 +44,14 @@ fun test ( void : void ) : void = (
 	{ if a then b else c } 
 );
 
+fun hehe( void : void ) : void = (
+	i + ((i + j) { where var i : integer })
+	{
+		where
+		var i : integer;
+		var j : integer
+	}
+);
+
 # type definition
 typ char : integer
