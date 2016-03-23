@@ -187,7 +187,7 @@ public class SynAn {
 					}
 					Report.error(symbol.position, "Syntax error, insert \"]\" to complete Dimensions");
 				}
-				Report.error(symbol.position, "Variable must provide array dimension expression");
+				Report.error(symbol.position, "Syntax error, variable must provide array dimension expression");
 			}
 			Report.error(symbol.position, "Syntax error, insert \"[\"");
 		default:
@@ -696,13 +696,13 @@ public class SynAn {
 			parseMulExpression();
 			break;
 		case Token.LBRACKET:
-			dump("postfix_expression' -> [ expression ]");
+			dump("postfix_expression' -> [ expression ] postfix_expression'");
 			skipSymbol();
 			parseExpression();
 			if (symbol.token != Token.RBRACKET)
-				Report.error(previous.position, 
-						"Syntax error, insert \"]\"");
+				Report.error(previous.position, "Syntax error, insert \"]\" to complete expression");
 			skipSymbol();
+			parsePostfixExpression_();
 			break;
 		default:
 			Report.error(symbol.position, 
@@ -832,9 +832,9 @@ public class SynAn {
 	}
 	
 	private void parseIf() {
-		// TODO
 		if (symbol.token == Token.KW_IF) {
 			dump("atom_expression -> if_expression if_expression'");
+			dump("if_expression -> if epression then expression");
 			skipSymbol();
 			parseExpression();
 			if (symbol.token == Token.KW_THEN) {

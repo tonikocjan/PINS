@@ -125,7 +125,7 @@ public class LexAn {
 			if (nxtCh == '#') 
 				while (nxtCh != -1 && nxtCh != 10) {
 					nxtCh = file.read();
-					if ((nxtCh < 32 || nxtCh > 126) && !isWhiteSpace(nxtCh))
+					if ((nxtCh < 32 || nxtCh > 126) && !isWhiteSpace(nxtCh) && nxtCh != -1)
 						Report.error(new Position(startRow, startCol), "Invalid token in comment");
 				}
 		
