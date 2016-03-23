@@ -122,6 +122,12 @@ public class Report {
 	/** Datoteka z vmesnimi rezultati prevajanja. */
 	private static PrintStream dumpFile = null;
 
+	/**
+	 * Odpre datoteko z vmesnimi rezultati.
+	 * 
+	 * @param sourceFileName
+	 *            Ime datoteke z vmesnimi rezultati.
+	 */
 	public static void openDumpFile(String sourceFileName) {
 		String dumpFileName = sourceFileName.replaceFirst("\\.pins$", "") + ".log";
 		try {
@@ -131,15 +137,36 @@ public class Report {
 		}
 	}
 	
+	/**
+	 * Zapre datoteko z vemsnimi rezultati.
+	 */
 	public static void closeDumpFile() {
 		dumpFile.close();
 		dumpFile = null;
 	}
 	
+	/**
+	 * Vrne datoteko z vmesnimi rezultati.
+	 * 
+	 * @return Datoteka z vmesnimi rezultati.
+	 */
 	public static PrintStream dumpFile() {
 		if (dumpFile == null)
 			Report.error ("Internal error: compiler.Report.dumpFile().");
 		return dumpFile;
+	}
+	
+	/**
+	 * Izpise vrstico na datoteko z vmesnimi rezultati zamknjeno v desno.
+	 * 
+	 * @param indent
+	 *            Sirina zamika.
+	 * @param line
+	 *            Vsebina vrstice.
+	 */
+	public static void dump(int indent, String line) {
+		for (int i = 0; i < indent; i++) dumpFile.print(" ");
+		dumpFile.println(line);
 	}
 	
 }
