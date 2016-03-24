@@ -4,6 +4,7 @@ import java.util.*;
 
 import compiler.*;
 import compiler.abstr.*;
+import compiler.lexan.Symbol;
 
 /**
  * Seznam definicij.
@@ -40,7 +41,7 @@ public class AbsDefs extends AbsTree {
 	public AbsDef def(int index) {
 		return defs[index];
 	}
-
+	
 	/**
 	 * Vrne stevilo definicij v seznamu.
 	 * 
