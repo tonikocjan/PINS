@@ -911,6 +911,8 @@ public class SynAn {
 		AbsExpr expr = null;
 
 		if (symbol.token == Token.KW_IF) {
+			dump("atom_expression -> if_expression if_expression'");
+
 			expr = parseIf();
 		} else if (symbol.token == Token.KW_WHILE) {
 			dump("atom_expression -> { while expression : expression }");
@@ -1002,7 +1004,6 @@ public class SynAn {
 
 	private AbsExpr parseIf() {
 		if (symbol.token == Token.KW_IF) {
-			dump("atom_expression -> if_expression if_expression'");
 			dump("if_expression -> if epression then expression");
 
 			Position start = symbol.position;
@@ -1078,5 +1079,4 @@ public class SynAn {
 			return;
 		Report.dumpFile().println(production);
 	}
-
 }
