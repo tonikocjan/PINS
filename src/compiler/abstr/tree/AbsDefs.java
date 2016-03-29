@@ -4,7 +4,6 @@ import java.util.*;
 
 import compiler.*;
 import compiler.abstr.*;
-import compiler.lexan.Symbol;
 
 /**
  * Seznam definicij.
