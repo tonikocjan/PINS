@@ -129,7 +129,7 @@ public class Report {
 	 *            Ime datoteke z vmesnimi rezultati.
 	 */
 	public static void openDumpFile(String sourceFileName) {
-		String dumpFileName = sourceFileName.replaceFirst("\\.pins$", "") + ".log";
+		String dumpFileName = sourceFileName.replaceFirst("\\.prev$", "") + ".log";
 		try {
 			dumpFile = new PrintStream(dumpFileName);
 		} catch (FileNotFoundException __) {

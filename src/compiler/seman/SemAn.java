@@ -1,20 +1,35 @@
-package compiler.abstr;
+package compiler.seman;
 
-import compiler.*;
+import compiler.Report;
+import compiler.abstr.*;
 import compiler.abstr.tree.*;
 
 /**
+ * Semanticni analizator.
+ * 
  * @author sliva
  */
-public class Abstr implements Visitor {
+public class SemAn implements Visitor {
 
 	/** Ali se izpisujejo vmesni rezultati. */
 	private boolean dump;
 
-	public Abstr(boolean dump) {
+	/**
+	 * Semanticni analizator.
+	 * 
+	 * @param dump
+	 *            Ali se izpisujejo vmesni rezultati.
+	 */
+	public SemAn(boolean dump) {
 		this.dump = dump;
 	}
 	
+	/**
+	 * Izpise abstraktno sintaksno drevo na datoteko vmesnih rezultatov.
+	 * 
+	 * @param tree
+	 *            Abstraktno sintaksno drevo.
+	 */
 	public void dump(AbsTree tree) {
 		if (! dump) return;
 		if (Report.dumpFile() == null) return;
@@ -144,6 +159,11 @@ public class Abstr implements Visitor {
 	
 	public void visit(AbsFunCall funCall) {
 		Report.dump(indent, "AbsFunCall " + funCall.position.toString() + ": " + funCall.name);
+		{
+			AbsDef def = SymbDesc.getNameDef(funCall);
+			if (def != null)
+				Report.dump(indent + 2, "#defined at " + def.position.toString());
+		}
 		for (int arg = 0; arg < funCall.numArgs(); arg++) {
 			indent += 2; funCall.arg(arg).accept(this); indent -= 2;
 		}
@@ -175,7 +195,7 @@ public class Abstr implements Visitor {
 		Report.dump(indent, "AbsPar " + par.position.toString() + ": " + par.name);
 		indent += 2; par.type.accept(this); indent -= 2;
 	}
-	
+		
 	public void visit(AbsTypeDef typeDef) {
 		Report.dump(indent, "AbsTypeDef " + typeDef.position.toString() + ": " + typeDef.name);
 		indent += 2; typeDef.type.accept(this); indent -= 2;
@@ -183,6 +203,11 @@ public class Abstr implements Visitor {
 	
 	public void visit(AbsTypeName typeName) {
 		Report.dump(indent, "AbsTypeName " + typeName.position.toString() + ": " + typeName.name);
+		{
+			AbsDef def = SymbDesc.getNameDef(typeName);
+			if (def != null)
+				Report.dump(indent + 2, "#defined at " + def.position.toString());
+		}
 	}
 	
 	public void visit(AbsUnExpr unExpr) {
@@ -209,6 +234,11 @@ public class Abstr implements Visitor {
 	
 	public void visit(AbsVarName varName) {
 		Report.dump(indent, "AbsVarName " + varName.position.toString() + ": " + varName.name);
+		{
+			AbsDef def = SymbDesc.getNameDef(varName);
+			if (def != null)
+				Report.dump(indent + 2, "#defined at " + def.position.toString());
+		}
 	}
 	
 	public void visit(AbsWhere where) {

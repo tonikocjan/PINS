@@ -323,7 +323,7 @@ public class SynAn {
 			return expressions;
 		default:
 			Report.error(symbol.position, "Syntax error on token \""
-					+ previous.lexeme + "\", delete this token");
+					+ symbol.lexeme + "\", delete this token");
 		}
 
 		return null;
@@ -932,13 +932,13 @@ public class SynAn {
 
 				expr = new AbsBinExpr(e1.position, AbsBinExpr.ASSIGN, e1, e2);
 			} else {
-				Report.error(symbol.position, "Syntax error on token \""
+				Report.error(previous.position, "Syntax error on token \""
 						+ previous.lexeme
 						+ "\", expected \"=\" after this token");
 			}
 		}
 		if (symbol.token != Token.RBRACE) {
-			Report.error(symbol.position, "Syntax error on token \""
+			Report.error(previous.position, "Syntax error on token \""
 					+ previous.lexeme + "\", expected \"}\" after this token");
 		}
 		skip();
@@ -966,15 +966,15 @@ public class SynAn {
 								new AbsVarName(count.position, count.lexeme),
 								e1, e2, e3, e4);
 					}
-					Report.error(symbol.position, "Syntax error on token \""
+					Report.error(previous.position, "Syntax error on token \""
 							+ previous.lexeme
 							+ "\", expected \":\" after this token");
 				}
-				Report.error(symbol.position, "Syntax error on token \""
+				Report.error(previous.position, "Syntax error on token \""
 						+ previous.lexeme
 						+ "\", expected \",\" after this token");
 			}
-			Report.error(symbol.position, "Syntax error on token \""
+			Report.error(previous.position, "Syntax error on token \""
 					+ previous.lexeme + "\", expected \",\" after this token");
 		}
 		Report.error(symbol.position, "Syntax error, expected keyword \"for\"");
@@ -993,10 +993,10 @@ public class SynAn {
 
 				return new AbsWhile(new Position(start, e2.position), e1, e2);
 			}
-			Report.error(symbol.position, "Syntax error on token \""
+			Report.error(previous.position, "Syntax error on token \""
 					+ previous.lexeme + "\", expected \":\" after this token");
 		}
-		Report.error(symbol.position,
+		Report.error(previous.position,
 				"Syntax error, expected keyword \"while\"");
 
 		return null;
@@ -1014,7 +1014,7 @@ public class SynAn {
 				AbsExpr e2 = parseExpression();
 				return parseIf_(new Position(start, e2.position), e1, e2);
 			}
-			Report.error(symbol.position, "Syntax error on token \""
+			Report.error(previous.position, "Syntax error on token \""
 					+ previous.lexeme
 					+ "\", expected keyword \"then\" after this token");
 		}
@@ -1060,7 +1060,7 @@ public class SynAn {
 	 */
 	private Symbol skip(Symbol expected) {
 		if (skip().token != expected.token)
-			Report.error(symbol.position, "Syntax error on token \""
+			Report.error(previous.position, "Syntax error on token \""
 					+ previous.lexeme + "\", expected \"" + expected.lexeme
 					+ "\" after this token");
 		return symbol;
