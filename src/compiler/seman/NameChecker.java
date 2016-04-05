@@ -65,6 +65,9 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsFunCall acceptor) {
+		if (currentState != TraversalState.ETS_functions)
+			return;
+		
 		AbsDef definition = SymbTable.fnd(acceptor.name);
 
 		if (definition == null)
@@ -150,6 +153,9 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsTypeName acceptor) {
+		if (currentState != TraversalState.ETS_functions)
+			return;
+		
 		AbsDef definition = SymbTable.fnd(acceptor.name);
 		if (definition == null)
 			Report.error(acceptor.position, "Type \"" + acceptor.name
@@ -177,6 +183,9 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsVarName acceptor) {
+		if (currentState != TraversalState.ETS_functions)
+			return;
+		
 		AbsDef definition = SymbTable.fnd(acceptor.name);
 		if (definition == null)
 			Report.error(acceptor.position, "Error, variable \""
