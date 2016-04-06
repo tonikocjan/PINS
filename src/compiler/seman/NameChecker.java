@@ -12,10 +12,22 @@ import compiler.abstr.tree.*;
  */
 public class NameChecker implements Visitor {
 
+	/**
+	 * Abstract syntax tree traversal states:
+	 * 
+	 *  - ETS_types: insert type definitions into symbol table
+	 *  - ETS_prototypes: insert function prototypes and variable definitions
+	 *  - ETS_functions: traverse into functions and 
+	 *  				 for every identifier (fun call, type name and var name),
+	 *  				 check if identifier is defined in symbol table
+	 */
 	private enum TraversalState {
 		ETS_types, ETS_prototypes, ETS_functions
 	}
 
+	/**
+	 * Current traversal state.
+	 */
 	private TraversalState currentState;
 
 	@Override
@@ -163,7 +175,7 @@ public class NameChecker implements Visitor {
 
 		SymbDesc.setNameDef(acceptor, definition);
 	}
-
+	
 	@Override
 	public void visit(AbsUnExpr acceptor) {
 		acceptor.expr.accept(this);
