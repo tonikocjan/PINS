@@ -118,23 +118,14 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsIfThen acceptor) {
 		acceptor.cond.accept(this);
-
-		SymbTable.newScope();
 		acceptor.thenBody.accept(this);
-		SymbTable.oldScope();
 	}
 
 	@Override
 	public void visit(AbsIfThenElse acceptor) {
 		acceptor.cond.accept(this);
-
-		SymbTable.newScope();
 		acceptor.thenBody.accept(this);
-		SymbTable.oldScope();
-
-		SymbTable.newScope();
 		acceptor.elseBody.accept(this);
-		SymbTable.oldScope();
 	}
 
 	@Override
@@ -165,7 +156,7 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsTypeName acceptor) {
-		if (currentState != TraversalState.ETS_functions)
+		if (currentState != TraversalState.ETS_prototypes)
 			return;
 		
 		AbsDef definition = SymbTable.fnd(acceptor.name);
@@ -219,10 +210,7 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsWhile acceptor) {
 		acceptor.cond.accept(this);
-
-		SymbTable.newScope();
 		acceptor.body.accept(this);
-		SymbTable.oldScope();
 	}
 
 }
