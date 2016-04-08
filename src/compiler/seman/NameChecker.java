@@ -12,22 +12,10 @@ import compiler.abstr.tree.*;
  */
 public class NameChecker implements Visitor {
 
-	/**
-	 * Abstract syntax tree traversal states:
-	 * 
-	 *  - ETS_types: insert type definitions into symbol table
-	 *  - ETS_prototypes: insert function prototypes and variable definitions
-	 *  - ETS_functions: traverse into functions and 
-	 *  				 for every identifier (fun call, type name and var name),
-	 *  				 check if identifier is defined in symbol table
-	 */
 	private enum TraversalState {
 		ETS_types, ETS_prototypes, ETS_functions
 	}
 
-	/**
-	 * Current traversal state.
-	 */
 	private TraversalState currentState;
 
 	@Override
@@ -79,7 +67,7 @@ public class NameChecker implements Visitor {
 	public void visit(AbsFunCall acceptor) {
 		if (currentState != TraversalState.ETS_functions)
 			return;
-		
+
 		AbsDef definition = SymbTable.fnd(acceptor.name);
 
 		if (definition == null)
@@ -118,14 +106,23 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsIfThen acceptor) {
 		acceptor.cond.accept(this);
+
+		SymbTable.newScope();
 		acceptor.thenBody.accept(this);
+		SymbTable.oldScope();
 	}
 
 	@Override
 	public void visit(AbsIfThenElse acceptor) {
 		acceptor.cond.accept(this);
+
+		SymbTable.newScope();
 		acceptor.thenBody.accept(this);
+		SymbTable.oldScope();
+
+		SymbTable.newScope();
 		acceptor.elseBody.accept(this);
+		SymbTable.oldScope();
 	}
 
 	@Override
@@ -148,25 +145,23 @@ public class NameChecker implements Visitor {
 				Report.error(acceptor.position, "Type definition \""
 						+ acceptor.name + "\" already exists");
 			}
-		}
-		else if (currentState == TraversalState.ETS_prototypes) {
+		} else if (currentState == TraversalState.ETS_prototypes) {
 			acceptor.type.accept(this);
 		}
 	}
 
 	@Override
 	public void visit(AbsTypeName acceptor) {
-		if (currentState != TraversalState.ETS_prototypes)
-			return;
-		
 		AbsDef definition = SymbTable.fnd(acceptor.name);
-		if (definition == null)
-			Report.error(acceptor.position, "Type \"" + acceptor.name
-					+ "\" undefined");
 
-		SymbDesc.setNameDef(acceptor, definition);
+		if (currentState == TraversalState.ETS_functions) {
+			if (definition == null)
+				Report.error(acceptor.position, "Type \"" + acceptor.name
+						+ "\" undefined");
+		} else if (currentState == TraversalState.ETS_prototypes)
+			SymbDesc.setNameDef(acceptor, definition);
 	}
-	
+
 	@Override
 	public void visit(AbsUnExpr acceptor) {
 		acceptor.expr.accept(this);
@@ -188,7 +183,7 @@ public class NameChecker implements Visitor {
 	public void visit(AbsVarName acceptor) {
 		if (currentState != TraversalState.ETS_functions)
 			return;
-		
+
 		AbsDef definition = SymbTable.fnd(acceptor.name);
 		if (definition == null)
 			Report.error(acceptor.position, "Error, variable \""
@@ -210,7 +205,10 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsWhile acceptor) {
 		acceptor.cond.accept(this);
+
+		SymbTable.newScope();
 		acceptor.body.accept(this);
+		SymbTable.oldScope();
 	}
 
 }
