@@ -10,23 +10,23 @@ fun fn(x : int, a : bool) : integer = (
 		'se en expression v if stavku'
 	)},
 	{ x = 10 * 10 },
-	(((((((x <= (!10 * --10 | a & b))))))))
+	(((((((x <= (-10 * --10)))))))) { where var b : logical }
 );
 
 # yet another function definition
 fun main (argv : arr[10] string, argc : int) : integer = (
-	printf ('prvi argument tabele = ' + argv[5 * -5]),
+	printf ('prvi argument tabele =  + argv[5 * -5]'),
 	return ( EXIT_SUCCESS )
-);
-
-fun hehe( void : void ) : void = (
-	i + ((i + j) { where var i : integer })
 	{
 		where
-		var i : integer;
-		var j : integer
+		fun return ( i : int ) : int = (i);
+		var EXIT_SUCCESS : integer
 	}
 );
 
 # type definition
-typ char : integer
+typ char : integer;
+typ int : integer;
+typ bool : logical;
+
+fun printf ( x : string ) : int = (x)

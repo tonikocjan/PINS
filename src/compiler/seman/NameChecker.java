@@ -106,23 +106,14 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsIfThen acceptor) {
 		acceptor.cond.accept(this);
-
-		SymbTable.newScope();
 		acceptor.thenBody.accept(this);
-		SymbTable.oldScope();
 	}
 
 	@Override
 	public void visit(AbsIfThenElse acceptor) {
 		acceptor.cond.accept(this);
-
-		SymbTable.newScope();
 		acceptor.thenBody.accept(this);
-		SymbTable.oldScope();
-
-		SymbTable.newScope();
 		acceptor.elseBody.accept(this);
-		SymbTable.oldScope();
 	}
 
 	@Override
@@ -153,13 +144,12 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsTypeName acceptor) {
 		AbsDef definition = SymbTable.fnd(acceptor.name);
+		
+		if (definition == null)
+			Report.error(acceptor.position, "Type \"" + acceptor.name
+					+ "\" undefined");
 
-		if (currentState == TraversalState.ETS_functions) {
-			if (definition == null)
-				Report.error(acceptor.position, "Type \"" + acceptor.name
-						+ "\" undefined");
-		} else if (currentState == TraversalState.ETS_prototypes)
-			SymbDesc.setNameDef(acceptor, definition);
+		SymbDesc.setNameDef(acceptor, definition);
 	}
 
 	@Override
@@ -172,6 +162,7 @@ public class NameChecker implements Visitor {
 		if (currentState == TraversalState.ETS_prototypes) {
 			try {
 				SymbTable.ins(acceptor.name, acceptor);
+				acceptor.type.accept(this);
 			} catch (SemIllegalInsertException e) {
 				Report.error(acceptor.position, "Duplicate variable \""
 						+ acceptor.name + "\"");
@@ -205,10 +196,7 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsWhile acceptor) {
 		acceptor.cond.accept(this);
-
-		SymbTable.newScope();
 		acceptor.body.accept(this);
-		SymbTable.oldScope();
 	}
 
 }
