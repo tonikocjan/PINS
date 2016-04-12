@@ -253,7 +253,7 @@ public class TypeChecker implements Visitor {
 		
 		if (type == null)
 			Report.error(acceptor.position,
-					"Type \"" + acceptor.name + "\" 12is undefined");
+					"Type \"" + acceptor.name + "\" is undefined");
 		
 		SymbDesc.setType(acceptor, type);
 	}
