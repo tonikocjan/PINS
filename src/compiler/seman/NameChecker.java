@@ -199,4 +199,10 @@ public class NameChecker implements Visitor {
 		acceptor.body.accept(this);
 	}
 
+	@Override
+	public void visit(AbsPtrType acceptor) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

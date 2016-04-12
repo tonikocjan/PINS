@@ -313,4 +313,10 @@ public class TypeChecker implements Visitor {
 					"Condition must be of type LOGICAL");
 	}
 
+	@Override
+	public void visit(AbsPtrType acceptor) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
