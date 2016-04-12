@@ -162,19 +162,16 @@ public class SynAn {
 
 			Vector<AbsPar> params = parseParameters();
 			skip();
-			
+
 			AbsType type = null;
-			
+
 			if (symbol.token == Token.KW_PTR) {
 				Position pos = symbol.position;
 				skip();
 
 				AbsType t = parseType();
-				type = new AbsPtrType(
-						new Position(pos, t.position), 
-						t);
-			}
-			else
+				type = new AbsPtrType(new Position(pos, t.position), t);
+			} else
 				type = parseType();
 
 			if (symbol.token != Token.ASSIGN)
@@ -200,7 +197,7 @@ public class SynAn {
 
 			skip(new Symbol(Token.COLON, ":", null));
 			skip();
-			
+
 			if (symbol.token == Token.KW_PTR) {
 				dump("var_definition -> var identifier : ptr type");
 				Position pos = symbol.position;
@@ -208,12 +205,11 @@ public class SynAn {
 				skip();
 				AbsType type = parseType();
 				return new AbsVarDef(new Position(startPos, type.position),
-						id.lexeme, 
-						new AbsPtrType(new Position(pos, type.position), type));
-			}
-			else {
+						id.lexeme, new AbsPtrType(new Position(pos,
+								type.position), type));
+			} else {
 				dump("var_definition -> var identifier : type");
-	
+
 				AbsType type = parseType();
 				return new AbsVarDef(new Position(startPos, type.position),
 						id.lexeme, type);
@@ -314,17 +310,17 @@ public class SynAn {
 			skip();
 
 			if (symbol.token == Token.KW_PTR) {
-				dump("parameter -> identifier : for type");
-				
+				dump("parameter -> identifier : ptr type");
+
 				skip();
 				Position pos = symbol.position;
 
 				AbsType type = parseType();
 				return new AbsPar(new Position(id.position, type.position),
-						id.lexeme, 
-						new AbsPtrType(new Position(pos, type.position), type));
+						id.lexeme, new AbsPtrType(new Position(pos,
+								type.position), type));
 			}
-			
+
 			dump("parameter -> identifier : type");
 
 			AbsType type = parseType();
@@ -396,6 +392,9 @@ public class SynAn {
 		case Token.ADD:
 		case Token.SUB:
 		case Token.NOT:
+			// AND and MUL are for pointers
+		case Token.AND:
+		case Token.MUL:
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:
@@ -445,6 +444,9 @@ public class SynAn {
 		case Token.ADD:
 		case Token.SUB:
 		case Token.NOT:
+		// AND and MUL are for pointers
+		case Token.AND:
+		case Token.MUL:
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:
@@ -496,6 +498,9 @@ public class SynAn {
 		case Token.ADD:
 		case Token.SUB:
 		case Token.NOT:
+		// AND and MUL are for pointers
+		case Token.AND:
+		case Token.MUL:
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:
@@ -549,6 +554,9 @@ public class SynAn {
 		case Token.ADD:
 		case Token.SUB:
 		case Token.NOT:
+		// AND and MUL are for pointers
+		case Token.AND:
+		case Token.MUL:
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:
@@ -642,6 +650,9 @@ public class SynAn {
 		case Token.ADD:
 		case Token.SUB:
 		case Token.NOT:
+		// AND and MUL are for pointers
+		case Token.AND:
+		case Token.MUL:
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:
@@ -710,6 +721,9 @@ public class SynAn {
 		case Token.ADD:
 		case Token.SUB:
 		case Token.NOT:
+		// AND and MUL are for pointers
+		case Token.AND:
+		case Token.MUL:
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:
@@ -808,6 +822,20 @@ public class SynAn {
 			e = parsePrefixExpression();
 			return new AbsUnExpr(new Position(op.position, e.position),
 					AbsUnExpr.NOT, e);
+		case Token.AND:
+			dump("prefix_expression -> & prefix_expression");
+			skip();
+
+			e = parsePrefixExpression();
+			return new AbsUnExpr(new Position(op.position, e.position),
+					AbsUnExpr.MEM, e);
+		case Token.MUL:
+			dump("prefix_expression -> * prefix_expression");
+			skip();
+
+			e = parsePrefixExpression();
+			return new AbsUnExpr(new Position(op.position, e.position),
+					AbsUnExpr.VAL, e);
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:

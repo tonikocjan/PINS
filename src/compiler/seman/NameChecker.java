@@ -24,6 +24,11 @@ public class NameChecker implements Visitor {
 	}
 
 	@Override
+	public void visit(AbsPtrType acceptor) {
+		acceptor.type.accept(this);
+	}
+
+	@Override
 	public void visit(AbsAtomConst acceptor) {
 
 	}
@@ -197,12 +202,6 @@ public class NameChecker implements Visitor {
 	public void visit(AbsWhile acceptor) {
 		acceptor.cond.accept(this);
 		acceptor.body.accept(this);
-	}
-
-	@Override
-	public void visit(AbsPtrType acceptor) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

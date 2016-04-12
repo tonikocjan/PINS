@@ -31,8 +31,15 @@ public class TypeChecker implements Visitor {
 	@Override
 	public void visit(AbsArrType acceptor) {
 		acceptor.type.accept(this);
-		SemArrType type = new SemArrType(acceptor.length, 
+		SemArrType type = new SemArrType(acceptor.length,
 				SymbDesc.getType(acceptor.type));
+		SymbDesc.setType(acceptor, type);
+	}
+
+	@Override
+	public void visit(AbsPtrType acceptor) {
+		acceptor.type.accept(this);
+		SemPtrType type = new SemPtrType(SymbDesc.getType(acceptor.type));
 		SymbDesc.setType(acceptor, type);
 	}
 
@@ -56,16 +63,16 @@ public class TypeChecker implements Visitor {
 
 		SemType integer = new SemAtomType(SemAtomType.INT);
 		SemType logical = new SemAtomType(SemAtomType.LOG);
-		
+
 		int oper = acceptor.oper;
-		
+
 		/**
 		 * expr1[expr2]
 		 */
 		if (oper == AbsBinExpr.ARR) {
 			/**
 			 * expr1 is of type ARR(n, t)
-			 */	
+			 */
 			if (t1 instanceof SemArrType) {
 				SemArrType arr = (SemArrType) t1;
 				if (t2.sameStructureAs(integer))
@@ -78,19 +85,21 @@ public class TypeChecker implements Visitor {
 						"Left side of ARR expression must be of type ARRAY");
 			return;
 		}
-		
+
 		/**
 		 * expr1 = expr2
 		 */
 		if (oper == AbsBinExpr.ASSIGN) {
 			if (t1.sameStructureAs(t2))
 				SymbDesc.setType(acceptor, t1);
+			else if (t1 instanceof SemPtrType && ((SemPtrType)t1).type == t2)
+				SymbDesc.setType(acceptor, t2);
 			else
-				Report.error(acceptor.position, 
+				Report.error(acceptor.position,
 						"Both expressions must be of the same type");
 			return;
 		}
-		
+
 		/**
 		 * expr1 and expr2 are of type LOGICAL
 		 */
@@ -99,7 +108,8 @@ public class TypeChecker implements Visitor {
 			if (oper >= 0 && oper <= 7)
 				SymbDesc.setType(acceptor, logical);
 			else
-				Report.error(acceptor.position, 
+				Report.error(
+						acceptor.position,
 						"Numeric operations \"+\", \"-\", \"*\", \"/\" and \"%\" are undefined for type LOGICAL");
 		}
 		/**
@@ -113,12 +123,11 @@ public class TypeChecker implements Visitor {
 			else if (oper >= 2 && oper <= 7)
 				SymbDesc.setType(acceptor, logical);
 			else
-				Report.error(acceptor.position, 
+				Report.error(acceptor.position,
 						"Logical operations \"&\" and \"|\" are undefined for type INTEGER");
-		}
-		else {
-			Report.error(acceptor.position,
-					"No viable operation for types " + t1 + " and " + t2);
+		} else {
+			Report.error(acceptor.position, "No viable operation for types "
+					+ t1 + " and " + t2);
 		}
 
 	}
@@ -136,8 +145,8 @@ public class TypeChecker implements Visitor {
 	public void visit(AbsExprs acceptor) {
 		for (int expr = 0; expr < acceptor.numExprs(); expr++)
 			acceptor.expr(expr).accept(this);
-		
-		SymbDesc.setType(acceptor, 
+
+		SymbDesc.setType(acceptor,
 				SymbDesc.getType(acceptor.expr(acceptor.numExprs() - 1)));
 	}
 
@@ -148,12 +157,12 @@ public class TypeChecker implements Visitor {
 		acceptor.hi.accept(this);
 		acceptor.step.accept(this);
 		acceptor.body.accept(this);
-		
+
 		SemType integer = new SemAtomType(SemAtomType.INT);
 		SemType lo_ = SymbDesc.getType(acceptor.lo);
 		SemType hi_ = SymbDesc.getType(acceptor.hi);
 		SemType step_ = SymbDesc.getType(acceptor.step);
-		
+
 		if (lo_.sameStructureAs(integer) && lo_.sameStructureAs(hi_)
 				&& lo_.sameStructureAs(step_))
 			SymbDesc.setType(acceptor, new SemAtomType(SemAtomType.VOID));
@@ -164,8 +173,8 @@ public class TypeChecker implements Visitor {
 
 	@Override
 	public void visit(AbsFunCall acceptor) {
-		SemFunType type = (SemFunType) SymbDesc.getType(
-				SymbDesc.getNameDef(acceptor));
+		SemFunType type = (SemFunType) SymbDesc.getType(SymbDesc
+				.getNameDef(acceptor));
 
 		if (type.getNumPars() != acceptor.numArgs())
 			Report.error(acceptor.position,
@@ -211,7 +220,7 @@ public class TypeChecker implements Visitor {
 				new SemAtomType(SemAtomType.LOG)))
 			SymbDesc.setType(acceptor, new SemAtomType(SemAtomType.VOID));
 		else
-			Report.error(acceptor.cond.position, 
+			Report.error(acceptor.cond.position,
 					"Condition must be of type LOGICAL");
 	}
 
@@ -225,7 +234,7 @@ public class TypeChecker implements Visitor {
 				new SemAtomType(SemAtomType.LOG)))
 			SymbDesc.setType(acceptor, new SemAtomType(SemAtomType.VOID));
 		else
-			Report.error(acceptor.cond.position, 
+			Report.error(acceptor.cond.position,
 					"Condition must be of type LOGICAL");
 	}
 
@@ -250,11 +259,11 @@ public class TypeChecker implements Visitor {
 	@Override
 	public void visit(AbsTypeName acceptor) {
 		SemType type = SymbDesc.getType(SymbDesc.getNameDef(acceptor));
-		
+
 		if (type == null)
-			Report.error(acceptor.position,
-					"Type \"" + acceptor.name + "\" 12is undefined");
-		
+			Report.error(acceptor.position, "Type \"" + acceptor.name
+					+ "\" 12is undefined");
+
 		SymbDesc.setType(acceptor, type);
 	}
 
@@ -269,13 +278,17 @@ public class TypeChecker implements Visitor {
 			else
 				Report.error(acceptor.position,
 						"Operator \"!\" is not defined for type " + type);
-		} else {
+		} else if (acceptor.oper == AbsUnExpr.ADD || acceptor.oper == AbsUnExpr.SUB) {
 			if (type.sameStructureAs(new SemAtomType(SemAtomType.INT)))
 				SymbDesc.setType(acceptor, new SemAtomType(SemAtomType.INT));
 			else
 				Report.error(acceptor.position,
 						"Operators \"+\" and \"-\" are not defined for type "
 								+ type);
+		} else if (acceptor.oper == AbsUnExpr.MEM) {
+			SymbDesc.setType(acceptor, new SemPtrType(type));
+		} else if (acceptor.oper == AbsUnExpr.VAL) {
+			SymbDesc.setType(acceptor, ((SemPtrType)type).type);
 		}
 	}
 
@@ -304,19 +317,13 @@ public class TypeChecker implements Visitor {
 	public void visit(AbsWhile acceptor) {
 		acceptor.cond.accept(this);
 		acceptor.body.accept(this);
-		
+
 		if (SymbDesc.getType(acceptor.cond).sameStructureAs(
 				new SemAtomType(SemAtomType.LOG)))
 			SymbDesc.setType(acceptor, new SemAtomType(SemAtomType.VOID));
 		else
 			Report.error(acceptor.cond.position,
 					"Condition must be of type LOGICAL");
-	}
-
-	@Override
-	public void visit(AbsPtrType acceptor) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
