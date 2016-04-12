@@ -63,20 +63,19 @@ public class TypeChecker implements Visitor {
 		 * expr1[expr2]
 		 */
 		if (oper == AbsBinExpr.ARR) {
-			try {
-				/**
-				 * expr1 is of type ARR(n, t)
-				 */	
+			/**
+			 * expr1 is of type ARR(n, t)
+			 */	
+			if (t1 instanceof SemArrType) {
 				SemArrType arr = (SemArrType) t1;
 				if (t2.sameStructureAs(integer))
 					SymbDesc.setType(acceptor, arr.type);
 				else
 					Report.error(acceptor.expr2.position,
 							"Expected INTEGER type for array index");
-			} catch (Exception e) {
+			} else
 				Report.error(acceptor.expr1.position,
 						"Left side of ARR expression must be of type ARRAY");
-			}
 			return;
 		}
 		
@@ -93,7 +92,7 @@ public class TypeChecker implements Visitor {
 		}
 		
 		/**
-		 * expr1 & expr2 are of type LOGICAL
+		 * expr1 and expr2 are of type LOGICAL
 		 */
 		if (t1.sameStructureAs(logical) && t1.sameStructureAs(t2)) {
 			// ==, !=, <=, >=, <, >, &, |
@@ -104,7 +103,7 @@ public class TypeChecker implements Visitor {
 						"Numeric operations \"+\", \"-\", \"*\", \"/\" and \"%\" are undefined for type LOGICAL");
 		}
 		/**
-		 * expr1 & expr2 are of type INTEGER
+		 * expr1 and expr2 are of type INTEGER
 		 */
 		else if (t1.sameStructureAs(integer) && t1.sameStructureAs(t2)) {
 			// +, -, *, /, %
@@ -165,12 +164,12 @@ public class TypeChecker implements Visitor {
 
 	@Override
 	public void visit(AbsFunCall acceptor) {
-		SemFunType type = (SemFunType) SymbDesc.getType(SymbDesc
-				.getNameDef(acceptor));
+		SemFunType type = (SemFunType) SymbDesc.getType(
+				SymbDesc.getNameDef(acceptor));
 
 		if (type.getNumPars() != acceptor.numArgs())
 			Report.error(acceptor.position,
-					"Number of arguments doesn't match for function call \""
+					"Number of arguments doesn't match for function \""
 							+ acceptor.name + "\"");
 
 		for (int arg = 0; arg < acceptor.numArgs(); arg++) {
@@ -250,8 +249,13 @@ public class TypeChecker implements Visitor {
 
 	@Override
 	public void visit(AbsTypeName acceptor) {
-		SymbDesc.setType(acceptor,
-				SymbDesc.getType(SymbDesc.getNameDef(acceptor)));
+		SemType type = SymbDesc.getType(SymbDesc.getNameDef(acceptor));
+		
+		if (type == null)
+			Report.error(acceptor.position,
+					"Type \"" + acceptor.name + "\" 12is undefined");
+		
+		SymbDesc.setType(acceptor, type);
 	}
 
 	@Override
@@ -305,7 +309,7 @@ public class TypeChecker implements Visitor {
 				new SemAtomType(SemAtomType.LOG)))
 			SymbDesc.setType(acceptor, new SemAtomType(SemAtomType.VOID));
 		else
-			Report.error(acceptor.cond.position, 
+			Report.error(acceptor.cond.position,
 					"Condition must be of type LOGICAL");
 	}
 

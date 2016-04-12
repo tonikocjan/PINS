@@ -146,8 +146,8 @@ public class NameChecker implements Visitor {
 		AbsDef definition = SymbTable.fnd(acceptor.name);
 		
 		if (definition == null)
-			Report.error(acceptor.position, "Type \"" + acceptor.name
-					+ "\" undefined");
+			Report.error(acceptor.position, 
+					"Type \"" + acceptor.name + "\" is undefined");
 
 		SymbDesc.setNameDef(acceptor, definition);
 	}
