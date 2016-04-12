@@ -8,6 +8,7 @@ import compiler.abstr.tree.*;
 public interface Visitor {
 	
 	public void visit(AbsArrType    acceptor);
+	public void visit(AbsPtrType    acceptor);
 	public void visit(AbsAtomConst  acceptor);
 	public void visit(AbsAtomType   acceptor);
 	public void visit(AbsBinExpr    acceptor);

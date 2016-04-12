@@ -162,8 +162,21 @@ public class SynAn {
 
 			Vector<AbsPar> params = parseParameters();
 			skip();
+			
+			AbsType type = null;
+			
+			if (symbol.token == Token.KW_PTR) {
+				Position pos = symbol.position;
+				skip();
 
-			AbsType type = parseType();
+				AbsType t = parseType();
+				type = new AbsPtrType(
+						new Position(pos, t.position), 
+						t);
+			}
+			else
+				type = parseType();
+
 			if (symbol.token != Token.ASSIGN)
 				Report.error(symbol.position, "Syntax error on token \""
 						+ previous.lexeme
@@ -187,12 +200,24 @@ public class SynAn {
 
 			skip(new Symbol(Token.COLON, ":", null));
 			skip();
+			
+			if (symbol.token == Token.KW_PTR) {
+				dump("var_definition -> var identifier : ptr type");
+				Position pos = symbol.position;
 
-			dump("var_definition -> var identifier : type");
-
-			AbsType type = parseType();
-			return new AbsVarDef(new Position(startPos, type.position),
-					id.lexeme, type);
+				skip();
+				AbsType type = parseType();
+				return new AbsVarDef(new Position(startPos, type.position),
+						id.lexeme, 
+						new AbsPtrType(new Position(pos, type.position), type));
+			}
+			else {
+				dump("var_definition -> var identifier : type");
+	
+				AbsType type = parseType();
+				return new AbsVarDef(new Position(startPos, type.position),
+						id.lexeme, type);
+			}
 		}
 		Report.error(previous.position, "Syntax error on token \""
 				+ previous.lexeme + "\", expected keyword \"var\"");
@@ -288,6 +313,18 @@ public class SynAn {
 			skip(new Symbol(Token.COLON, ":", null));
 			skip();
 
+			if (symbol.token == Token.KW_PTR) {
+				dump("parameter -> identifier : for type");
+				
+				skip();
+				Position pos = symbol.position;
+
+				AbsType type = parseType();
+				return new AbsPar(new Position(id.position, type.position),
+						id.lexeme, 
+						new AbsPtrType(new Position(pos, type.position), type));
+			}
+			
 			dump("parameter -> identifier : type");
 
 			AbsType type = parseType();
