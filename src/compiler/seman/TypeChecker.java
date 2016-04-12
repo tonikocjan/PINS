@@ -198,8 +198,13 @@ public class TypeChecker implements Visitor {
 					new SemFunType(parameters, SymbDesc.getType(acceptor.type)));
 		} else if (currentState == TraversalState.ETS_functions) {
 			acceptor.expr.accept(this);
+			SemType returnType = SymbDesc.getType(acceptor.expr);
+			SemFunType fnType = (SemFunType) SymbDesc.getType(acceptor);
+			
+			if (!fnType.resultType.sameStructureAs(returnType))
+				Report.error(acceptor.expr.position,
+						"Invalid return type " + returnType + ", expected type " + fnType.resultType);
 		}
-
 	}
 
 	@Override
