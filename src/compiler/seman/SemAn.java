@@ -291,6 +291,12 @@ public class SemAn implements Visitor {
 		case AbsUnExpr.NOT:
 			Report.dump(indent, "AbsUnExpr " + unExpr.position.toString() + ": NOT");
 			break;
+		case AbsUnExpr.MEM:
+			Report.dump(indent, "AbsUnExpr " + unExpr.position.toString() + ": MEM");
+			break;
+		case AbsUnExpr.VAL:
+			Report.dump(indent, "AbsUnExpr " + unExpr.position.toString() + ": VAL");
+			break;
 		default:
 			Report.error("Internal error :: compiler.abstr.Abstr.visit(AbsBinExpr)");
 		}
@@ -346,6 +352,12 @@ public class SemAn implements Visitor {
 		}
 		indent += 2; whileStmt.cond.accept(this); indent -= 2;
 		indent += 2; whileStmt.body.accept(this); indent -= 2;
+	}
+
+	@Override
+	public void visit(AbsPtrType acceptor) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

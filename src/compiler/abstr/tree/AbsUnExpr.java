@@ -12,6 +12,8 @@ public class AbsUnExpr extends AbsExpr {
 
 	public static final int ADD = 0;
 	public static final int SUB = 1;
+	public static final int MEM = 2;
+	public static final int VAL = 3;
 	public static final int NOT = 4;
 
 	/** Operator. */
