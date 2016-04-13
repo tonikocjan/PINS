@@ -340,6 +340,8 @@ public class SynAn {
 		case Token.ADD:
 		case Token.SUB:
 		case Token.NOT:
+		case Token.AND:
+		case Token.MUL:
 		case Token.LOG_CONST:
 		case Token.INT_CONST:
 		case Token.STR_CONST:

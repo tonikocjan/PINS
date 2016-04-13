@@ -92,11 +92,11 @@ public class TypeChecker implements Visitor {
 		if (oper == AbsBinExpr.ASSIGN) {
 			if (t1.sameStructureAs(t2))
 				SymbDesc.setType(acceptor, t1);
-			else if (t1 instanceof SemPtrType && ((SemPtrType)t1).type == t2)
+			else if (t1.sameStructureAs(t2))
 				SymbDesc.setType(acceptor, t2);
 			else
 				Report.error(acceptor.position,
-						"Both expressions must be of the same type");
+						"Cannot assign type " + t2 + " to type " + t1);
 			return;
 		}
 
@@ -258,7 +258,11 @@ public class TypeChecker implements Visitor {
 
 	@Override
 	public void visit(AbsTypeName acceptor) {
-		SemType type = SymbDesc.getType(SymbDesc.getNameDef(acceptor));
+		AbsDef definition = SymbDesc.getNameDef(acceptor);
+		if (!(definition instanceof AbsTypeDef))
+			Report.error(acceptor.position, "Expected type definition");
+		
+		SemType type = SymbDesc.getType(definition);
 
 		if (type == null)
 			Report.error(acceptor.position, "Type \"" + acceptor.name
