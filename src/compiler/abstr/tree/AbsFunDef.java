@@ -69,5 +69,4 @@ public class AbsFunDef extends AbsDef {
 	}
 
 	@Override public void accept(Visitor visitor) { visitor.visit(this); }
-
 }

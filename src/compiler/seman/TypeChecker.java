@@ -44,6 +44,40 @@ public class TypeChecker implements Visitor {
 	}
 
 	@Override
+	public void visit(AbsStructType acceptor) {
+		ArrayList<SemType> types = new ArrayList<>();
+		ArrayList<String> names = new ArrayList<>();
+		for (int i = 0; i < acceptor.getDefinitions().numDefs(); i++) {
+			AbsDef def = acceptor.getDefinitions().def(i);
+			if (def instanceof AbsVarDef) {
+				AbsVarDef def_ = (AbsVarDef)def;
+				def_.type.accept(this);
+				SemType type = SymbDesc.getType(def_.type);
+				
+				types.add(type);
+				names.add(def_.name);
+			}
+			else if (def instanceof AbsTypeDef) {
+				AbsTypeDef def_ = (AbsTypeDef)def;
+				def_.type.accept(this);
+				SemType type = SymbDesc.getType(def_.type);
+				
+				types.add(type);
+				names.add(def_.name);
+			}
+			else if (def instanceof AbsFunDef) {
+				AbsFunDef def_ = (AbsFunDef)def;
+				def_.type.accept(this);
+				SemType type = SymbDesc.getType(def_.type);
+				
+				types.add(type);
+				names.add(def_.name);
+			}
+		}
+		SymbDesc.setType(acceptor, new SemStructType(names, types));
+	}
+
+	@Override
 	public void visit(AbsAtomConst acceptor) {
 		SymbDesc.setType(acceptor, new SemAtomType(acceptor.type));
 	}
@@ -95,8 +129,8 @@ public class TypeChecker implements Visitor {
 			else if (t1.sameStructureAs(t2))
 				SymbDesc.setType(acceptor, t2);
 			else
-				Report.error(acceptor.position,
-						"Cannot assign type " + t2 + " to type " + t1);
+				Report.error(acceptor.position, "Cannot assign type " + t2
+						+ " to type " + t1);
 			return;
 		}
 
@@ -261,7 +295,7 @@ public class TypeChecker implements Visitor {
 		AbsDef definition = SymbDesc.getNameDef(acceptor);
 		if (!(definition instanceof AbsTypeDef))
 			Report.error(acceptor.position, "Expected type definition");
-		
+
 		SemType type = SymbDesc.getType(definition);
 
 		if (type == null)
@@ -282,7 +316,8 @@ public class TypeChecker implements Visitor {
 			else
 				Report.error(acceptor.position,
 						"Operator \"!\" is not defined for type " + type);
-		} else if (acceptor.oper == AbsUnExpr.ADD || acceptor.oper == AbsUnExpr.SUB) {
+		} else if (acceptor.oper == AbsUnExpr.ADD
+				|| acceptor.oper == AbsUnExpr.SUB) {
 			if (type.sameStructureAs(new SemAtomType(SemAtomType.INT)))
 				SymbDesc.setType(acceptor, new SemAtomType(SemAtomType.INT));
 			else
@@ -292,7 +327,7 @@ public class TypeChecker implements Visitor {
 		} else if (acceptor.oper == AbsUnExpr.MEM) {
 			SymbDesc.setType(acceptor, new SemPtrType(type));
 		} else if (acceptor.oper == AbsUnExpr.VAL) {
-			SymbDesc.setType(acceptor, ((SemPtrType)type).type);
+			SymbDesc.setType(acceptor, ((SemPtrType) type).type);
 		}
 	}
 

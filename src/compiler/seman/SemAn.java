@@ -52,6 +52,16 @@ public class SemAn implements Visitor {
 		}
 		indent += 2; arrType.type.accept(this); indent -= 2;
 	}
+
+	@Override
+	public void visit(AbsPtrType acceptor) {
+		// TODO Auto-generated method stub
+	}
+	
+	@Override
+	public void visit(AbsStructType acceptor) {
+		// TODO Auto-generated method stub
+	}
 	
 	public void visit(AbsAtomConst atomConst) {
 		switch (atomConst.type) {
@@ -352,12 +362,6 @@ public class SemAn implements Visitor {
 		}
 		indent += 2; whileStmt.cond.accept(this); indent -= 2;
 		indent += 2; whileStmt.body.accept(this); indent -= 2;
-	}
-
-	@Override
-	public void visit(AbsPtrType acceptor) {
-		// TODO Auto-generated method stub
-		
 	}
 	
 }

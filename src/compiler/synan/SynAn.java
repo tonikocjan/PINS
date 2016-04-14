@@ -138,10 +138,24 @@ public class SynAn {
 			Symbol id = symbol;
 			skip(new Symbol(Token.COLON, ":", null));
 			skip();
-
-			dump("type_definition -> typ identifier : type");
-
-			AbsType type = parseType();
+			
+			AbsType type = null;
+			
+			if (symbol.token == Token.KW_STRUCT) {
+				dump("type_definition -> typ identifier : struct { definitions }");
+				skip(new Symbol(Token.LBRACE, "{", null));
+				skip();
+				
+				AbsDefs definitions = parseDefinitions();
+				
+				type = new AbsStructType(
+						new Position(startPos, definitions.position), 
+						definitions);
+			}
+			else {
+				dump("type_definition -> typ identifier : type");
+				type = parseType();
+			}
 			return new AbsTypeDef(new Position(startPos, type.position),
 					id.lexeme, type);
 		}
@@ -203,7 +217,7 @@ public class SynAn {
 				Position pos = symbol.position;
 
 				skip();
-				AbsType type = ptr();
+				AbsType type = parsePointer();
 				return new AbsVarDef(new Position(startPos, type.position),
 						id.lexeme, new AbsPtrType(new Position(pos,
 								type.position), type));
@@ -221,11 +235,11 @@ public class SynAn {
 		return null;
 	}
 	
-	private AbsType ptr() {
+	private AbsType parsePointer() {
 		if (symbol.token == Token.KW_PTR) {
 			Position pos = symbol.position;
 			skip();
-			return new AbsPtrType(pos, ptr());
+			return new AbsPtrType(pos, parsePointer());
 		}
 		return parseType();
 	}
@@ -324,7 +338,7 @@ public class SynAn {
 				skip();
 				Position pos = symbol.position;
 
-				AbsType type = parseType();
+				AbsType type = parsePointer();
 				return new AbsPar(new Position(id.position, type.position),
 						id.lexeme, new AbsPtrType(new Position(pos,
 								type.position), type));
@@ -971,6 +985,20 @@ public class SynAn {
 				return new AbsFunCall(new Position(current.position,
 						absExprs.lastElement().position), current.lexeme,
 						absExprs);
+			} else if (symbol.token == Token.DOT) {
+				dump("atom_expression -> identifier.identifier");
+				
+				AbsVarName expr1 = new AbsVarName(current.position, current.lexeme);
+				skip(new Symbol(Token.IDENTIFIER, "identifier", null));
+				
+				AbsVarName expr2 = new AbsVarName(symbol.position, symbol.lexeme);
+				skip();
+				
+				return new AbsBinExpr(
+						new Position(expr1.position, expr2.position),
+						AbsBinExpr.DOT,
+						expr1,
+						expr2);
 			} else {
 				dump("atom_expression -> identifier");
 				return new AbsVarName(current.position, current.lexeme);

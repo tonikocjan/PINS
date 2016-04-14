@@ -27,6 +27,12 @@ public class NameChecker implements Visitor {
 	public void visit(AbsPtrType acceptor) {
 		acceptor.type.accept(this);
 	}
+	
+	@Override
+	public void visit(AbsStructType acceptor) {
+		
+	}
+
 
 	@Override
 	public void visit(AbsAtomConst acceptor) {

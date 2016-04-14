@@ -32,7 +32,7 @@ public class LexAn {
 	/**
 	 * Map containing all reserved keywords.
 	 */
-	private static final String[] keywords = new String[]{"logical", "integer", "string", "arr", "else", "for", "fun", "if", "then", "typ", "var", "where", "while", "ptr"};
+	private static final String[] keywords = new String[]{"logical", "integer", "string", "arr", "else", "for", "fun", "if", "then", "typ", "var", "where", "while", "ptr", "struct"};
 	private static Map<String, Integer> keywordsMap = null;
 
 	/**
@@ -293,7 +293,7 @@ public class LexAn {
 		if (ch == '>') return new Symbol(Token.GTH, ">", startRow, startCol, startRow, startCol + 1);
 		if (ch == '=') return new Symbol(Token.ASSIGN, "=", startRow, startCol, startRow, startCol + 1);
 
-		if (ch == '.') return new Symbol(Token.DOT, ",", startRow, startCol, startRow, startCol + 1);
+		if (ch == '.') return new Symbol(Token.DOT, ".", startRow, startCol, startRow, startCol + 1);
 		if (ch == ':') return new Symbol(Token.COLON, ":", startRow, startCol, startRow, startCol + 1);
 		if (ch == ';') return new Symbol(Token.SEMIC, ";", startRow, startCol, startRow, startCol + 1);
 		if (ch == ',') return new Symbol(Token.COMMA, ",", startRow, startCol, startRow, startCol + 1);

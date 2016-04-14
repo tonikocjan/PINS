@@ -9,6 +9,7 @@ public interface Visitor {
 	
 	public void visit(AbsArrType    acceptor);
 	public void visit(AbsPtrType    acceptor);
+	public void visit(AbsStructType acceptor);
 	public void visit(AbsAtomConst  acceptor);
 	public void visit(AbsAtomType   acceptor);
 	public void visit(AbsBinExpr    acceptor);
@@ -31,5 +32,4 @@ public interface Visitor {
 	public void visit(AbsVarName    acceptor);
 	public void visit(AbsWhere      acceptor);
 	public void visit(AbsWhile      acceptor);
-
 }

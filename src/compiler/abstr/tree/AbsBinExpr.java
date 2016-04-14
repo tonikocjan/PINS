@@ -23,6 +23,7 @@ public class AbsBinExpr extends AbsExpr {
 	public static final int MUL = 10;
 	public static final int DIV = 11;
 	public static final int MOD = 12;
+	public static final int DOT = 13;
 	public static final int ARR = 14;
 	public static final int ASSIGN = 15;
 

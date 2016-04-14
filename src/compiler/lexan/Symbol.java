@@ -100,6 +100,7 @@ public class Symbol {
 		case Token.COMMA     : tokenName = "COMMA"     ; break;
 		
 		case Token.KW_PTR 	 : tokenName = "POINTER"   ; break;
+		case Token.KW_STRUCT : tokenName = "STRUCT"   ; break;
 		
 		case Token.ASSIGN    : tokenName = "ASSIGN"    ; break;
 		
