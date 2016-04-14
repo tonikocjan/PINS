@@ -199,11 +199,11 @@ public class SynAn {
 			skip();
 
 			if (symbol.token == Token.KW_PTR) {
-				dump("var_definition -> var identifier : ptr type");
+				dump("var_definition -> var identifier : ptr ptr'");
 				Position pos = symbol.position;
 
 				skip();
-				AbsType type = parseType();
+				AbsType type = ptr();
 				return new AbsVarDef(new Position(startPos, type.position),
 						id.lexeme, new AbsPtrType(new Position(pos,
 								type.position), type));
@@ -219,6 +219,15 @@ public class SynAn {
 				+ previous.lexeme + "\", expected keyword \"var\"");
 
 		return null;
+	}
+	
+	private AbsType ptr() {
+		if (symbol.token == Token.KW_PTR) {
+			Position pos = symbol.position;
+			skip();
+			return new AbsPtrType(pos, ptr());
+		}
+		return parseType();
 	}
 
 	private AbsType parseType() {
