@@ -149,6 +149,7 @@ public class SynAn {
 				AbsDefs definitions = parseDefinitions();
 				
 				type = new AbsStructType(
+						id.lexeme,
 						new Position(startPos, definitions.position), 
 						definitions);
 			}

@@ -8,22 +8,31 @@ import compiler.Report;
 
 public class SemStructType extends SemType {
 
-	private LinkedHashMap<String, SemType> members = new LinkedHashMap<>();
+	private final LinkedHashMap<String, SemType> members = new LinkedHashMap<>();
+	private final String name;
 
 	/**
 	 * Ustvari nov opis strukture.
 	 * 
-	 * @param type
-	 *            Tip elementa tabele.
-	 * @param size
-	 *            Velikost tabele.
+	 * @param name name of structure
+	 * @param names List of names for each definition
+	 * @param types List of types for each definition
 	 */
-	public SemStructType(ArrayList<String> names, ArrayList<SemType> types) {
+	public SemStructType(String name, ArrayList<String> names, ArrayList<SemType> types) {
 		if (names.size() != types.size())
 			Report.error("Internal error :: compiler.seman.type.SemStructType: names size not equal types size");
 
 		for (int i = 0; i < names.size(); i++)
 			members.put(names.get(i), types.get(i));
+		this.name = name;
+	}
+	
+	public LinkedHashMap<String, SemType> getMembers() {
+		return members;
+	}
+	
+	public String getName() {
+		return name;
 	}
 
 	@Override
@@ -37,9 +46,13 @@ public class SemStructType extends SemType {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		int i = 0;
 		sb.append("STRUCT(");
-		for (Map.Entry<String, SemType> entry : members.entrySet())
-			sb.append(entry.getKey() + ":" + entry.getValue().toString() + ";");
+		for (Map.Entry<String, SemType> entry : members.entrySet()) {
+			sb.append(entry.getKey() + ":" + entry.getValue().toString());
+			if (++i < members.size()) sb.append(";");
+		}
+		sb.append(")");
 		return sb.toString();
 	}
 

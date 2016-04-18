@@ -47,6 +47,8 @@ public class TypeChecker implements Visitor {
 	public void visit(AbsStructType acceptor) {
 		ArrayList<SemType> types = new ArrayList<>();
 		ArrayList<String> names = new ArrayList<>();
+//		acceptor.getDefinitions().accept(this);
+		
 		for (int i = 0; i < acceptor.getDefinitions().numDefs(); i++) {
 			AbsDef def = acceptor.getDefinitions().def(i);
 			if (def instanceof AbsVarDef) {
@@ -74,7 +76,7 @@ public class TypeChecker implements Visitor {
 				names.add(def_.name);
 			}
 		}
-		SymbDesc.setType(acceptor, new SemStructType(names, types));
+		SymbDesc.setType(acceptor, new SemStructType(acceptor.getName(), names, types));
 	}
 
 	@Override
@@ -133,7 +135,33 @@ public class TypeChecker implements Visitor {
 						+ " to type " + t1);
 			return;
 		}
-
+		
+		/**
+		 * identifier.identifier
+		 */
+		if (oper == AbsBinExpr.DOT) {
+			if (!(acceptor.expr1 instanceof AbsVarName && 
+					acceptor.expr2 instanceof AbsVarName))
+				Report.error(acceptor.position,
+						"Expression must be variable name");
+			
+			SemTypeName typ_ = (SemTypeName) t1;
+			if (!(typ_.getType() instanceof SemStructType))
+				Report.error(acceptor.position, 
+						"Left expression's type must be a structure to use DOT operator");
+			
+			String name = ((AbsVarName)acceptor.expr2).name;
+			SemStructType sType = (SemStructType)typ_.getType();
+			SemType type = sType.getMembers().get(name);
+			
+			if (type == null)
+				Report.error(acceptor.position,
+						"\"" + name + "\" is not defined in struct \"" + sType.getName() + "\"");
+			
+			SymbDesc.setType(acceptor, type);
+			return;
+		}
+		
 		/**
 		 * expr1 and expr2 are of type LOGICAL
 		 */
@@ -241,6 +269,11 @@ public class TypeChecker implements Visitor {
 					new SemFunType(parameters, SymbDesc.getType(acceptor.type)));
 		} else if (currentState == TraversalState.ETS_functions) {
 			acceptor.expr.accept(this);
+			SemType returnType = SymbDesc.getType(acceptor.expr);
+			SemFunType funType = (SemFunType) SymbDesc.getType(acceptor);
+			if (!returnType.sameStructureAs(funType.resultType))
+				Report.error(acceptor.expr.position,
+						"Return type doesn't match");
 		}
 
 	}
@@ -300,7 +333,7 @@ public class TypeChecker implements Visitor {
 
 		if (type == null)
 			Report.error(acceptor.position, "Type \"" + acceptor.name
-					+ "\" 12is undefined");
+					+ "\" is undefined");
 
 		SymbDesc.setType(acceptor, type);
 	}

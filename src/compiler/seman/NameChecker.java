@@ -30,7 +30,13 @@ public class NameChecker implements Visitor {
 	
 	@Override
 	public void visit(AbsStructType acceptor) {
-		
+		SymbTable.newScope();
+		for (TraversalState state : TraversalState.values()) {
+			currentState = state;
+			for (int def = 0; def < acceptor.getDefinitions().numDefs(); def++)
+				acceptor.getDefinitions().def(def).accept(this);
+		}
+		SymbTable.oldScope();
 	}
 
 
@@ -47,7 +53,9 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsBinExpr acceptor) {
 		acceptor.expr1.accept(this);
-		acceptor.expr2.accept(this);
+		
+		if (acceptor.oper != AbsBinExpr.DOT)
+			acceptor.expr2.accept(this);
 	}
 
 	@Override
