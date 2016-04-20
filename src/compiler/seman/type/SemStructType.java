@@ -2,6 +2,7 @@ package compiler.seman.type;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import compiler.Report;
@@ -40,7 +41,19 @@ public class SemStructType extends SemType {
 		if (!(type instanceof SemStructType))
 			return false;
 		
-		return members.equals(((SemStructType)type).members);
+		SemStructType type_ = (SemStructType) type;
+		
+		if (members.size() != type_.members.size())
+			return false;
+		
+		List<SemType> this_ = new ArrayList<>(members.values());
+		List<SemType> o_ = new ArrayList<>(type_.members.values());
+		
+		for (int i = 0; i < this_.size(); i++) {
+			if (!this_.get(i).sameStructureAs(o_.get(i)))
+				return false;
+		}
+		return true;
 	}
 
 	@Override
