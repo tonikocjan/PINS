@@ -252,7 +252,7 @@ public class TypeChecker implements Visitor {
 						"Parameter type doesn't match");
 		}
 
-		SymbDesc.setType(acceptor, type);
+		SymbDesc.setType(acceptor, type.resultType);
 	}
 
 	@Override
@@ -360,6 +360,9 @@ public class TypeChecker implements Visitor {
 		} else if (acceptor.oper == AbsUnExpr.MEM) {
 			SymbDesc.setType(acceptor, new SemPtrType(type));
 		} else if (acceptor.oper == AbsUnExpr.VAL) {
+			if (!(type instanceof SemPtrType))
+				Report.error(acceptor.position, 
+						"Error, operator \"*\" requires pointer operand");
 			SymbDesc.setType(acceptor, ((SemPtrType) type).type);
 		}
 	}

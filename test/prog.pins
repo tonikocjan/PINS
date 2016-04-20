@@ -1,3 +1,29 @@
-fun hehe( x : x ) : x = (
-	x
+typ vector3 : struct {
+	typ int : integer;
+	var x : integer;
+	var y : integer;
+	var z : integer
+};
+
+fun manhatanDist(x : vector3) : integer = (
+	x.x + x.y + x.z
+);
+
+fun naivBayes(x : arr[100] vector3, ray : vector3) : logical = (
+	{ for i = 0, 100, 1 :
+		{ if manhatanDist(x[i]) > manhatanDist(ray) then 
+			printf('borut je noob %d', 111) 
+		}
+	 } { where var i : integer; typ int : integer;
+	 	fun printf(text : string, val : int) : string = (
+	 		text
+	 	)
+	  },
+	true
+);
+
+var x : string;
+
+fun test (x : integer) : ptr integer = (
+	&vec.x { where var vec : vector3 }
 )

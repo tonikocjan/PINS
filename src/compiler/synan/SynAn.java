@@ -142,11 +142,15 @@ public class SynAn {
 			AbsType type = null;
 			
 			if (symbol.token == Token.KW_STRUCT) {
-				dump("type_definition -> typ identifier : struct { definitions }");
+				dump("type_definition -> typ identifier : struct { var_definitions }");
 				skip(new Symbol(Token.LBRACE, "{", null));
 				skip();
 				
 				AbsDefs definitions = parseDefinitions();
+				for (int i = 0; i < definitions.numDefs(); i++)
+					if (!(definitions.def(i) instanceof AbsVarDef))
+						Report.error(definitions.def(i).position, 
+								"Syntax error, structs only allow variable definitions");
 				
 				type = new AbsStructType(
 						id.lexeme,
@@ -454,6 +458,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
+		case Token.DOT:
 		case Token.EOF:
 			dump("expression' -> e");
 			return e;
@@ -508,6 +513,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
+		case Token.DOT:
 		case Token.EOF:
 			dump("logical_ior_expression' -> e");
 			return e;
@@ -564,6 +570,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
+		case Token.DOT:
 		case Token.EOF:
 			dump("logical_and_expression' -> e");
 			return e;
@@ -617,6 +624,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
+		case Token.DOT:
 		case Token.EOF:
 			dump("compare_expression' -> e");
 			return e;
@@ -712,6 +720,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
+		case Token.DOT:
 		case Token.EOF:
 		case Token.EQU:
 		case Token.NEQ:
@@ -784,6 +793,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
+		case Token.DOT:
 		case Token.EOF:
 		case Token.EQU:
 		case Token.NEQ:
@@ -911,6 +921,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
+		case Token.DOT:
 		case Token.EOF:
 		case Token.EQU:
 		case Token.NEQ:

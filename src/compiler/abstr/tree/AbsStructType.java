@@ -12,6 +12,7 @@ public class AbsStructType extends AbsType {
 	
 	public AbsStructType(String name, Position pos, AbsDefs definitions) {
 		super(pos);
+		
 		this.definitions = definitions;
 		this.name = name;
 	}

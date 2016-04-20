@@ -30,13 +30,11 @@ public class NameChecker implements Visitor {
 	
 	@Override
 	public void visit(AbsStructType acceptor) {
+		TraversalState tmp = currentState;
 		SymbTable.newScope();
-		for (TraversalState state : TraversalState.values()) {
-			currentState = state;
-			for (int def = 0; def < acceptor.getDefinitions().numDefs(); def++)
-				acceptor.getDefinitions().def(def).accept(this);
-		}
+		acceptor.getDefinitions().accept(this);
 		SymbTable.oldScope();
+		currentState = tmp;
 	}
 
 
@@ -91,7 +89,7 @@ public class NameChecker implements Visitor {
 
 		if (definition == null)
 			Report.error(acceptor.position, "Error, function \""
-					+ acceptor.name + "\" undefined");
+					+ acceptor.name + "\" is undefined");
 
 		SymbDesc.setNameDef(acceptor, definition);
 
