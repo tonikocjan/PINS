@@ -69,4 +69,9 @@ public class SemTypeName extends SemType {
 				+ ")";
 	}
 
+	@Override
+	public int size() {
+		return actualType().size();
+	}
+
 }

@@ -47,4 +47,18 @@ public class SemAtomType extends SemType {
 		Report.error("Internal error :: compiler.seman.type.SemAtomType.toString()");
 		return "";
 	}
+
+	@Override
+	public int size() {
+		switch (type) {
+		case LOG:
+		case INT:
+		case STR:
+			return 4;
+		case VOID:
+			return 0;
+		}
+		Report.error("Internal error :: compiler.seman.type.SemAtomType.size()");
+		return 0;
+	}
 }

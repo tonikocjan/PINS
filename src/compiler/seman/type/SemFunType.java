@@ -78,4 +78,13 @@ public class SemFunType extends SemType {
 		return str;
 	}
 
+	@Override
+	public int size() {
+		int input = 4;
+		for (SemType t : parTypes)
+			input += t.size();
+		
+		return Math.max(resultType.size(), input);
+	}
+
 }
