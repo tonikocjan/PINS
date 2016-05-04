@@ -1,3 +1,32 @@
-fun hehe( x : x ) : x = (
-	x
-)
+# function definitions
+fun fn(x : int, a : bool) : integer = (
+	# expression { where definitions }
+	x { where 
+		var x : integer
+	},
+	{ if x > 10 & a == true then 
+	(
+		printf ( 'danes je lep dan' ),
+		'se en expression v if stavku'
+	)},
+	{ x = 10 * 10 },
+	(((((((x <= (-10 * --10)))))))) { where var b : logical }
+);
+
+# yet another function definition
+fun main (argv : arr[10] string, argc : int) : integer = (
+	printf ('prvi argument tabele =  + argv[5 * -5]'),
+	return ( EXIT_SUCCESS )
+	{
+		where
+		fun return ( i : int ) : int = (i);
+		var EXIT_SUCCESS : integer
+	}
+);
+
+# type definition
+typ char : integer;
+typ int : integer;
+typ bool : logical;
+
+fun printf ( x : string ) : int = (x)
