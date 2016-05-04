@@ -62,4 +62,5 @@ public class Token {
 	/** Vrsta simbola: kljucna beseda while.  */					public static final int KW_WHILE 	= 42;
 
 	/** Vrsta simbola: ključna beseda ptr.  */						public static final int KW_PTR 		= 43;
+	/** Vrsta simbola: ključna beseda struct.  */					public static final int KW_STRUCT   = 44;
 }

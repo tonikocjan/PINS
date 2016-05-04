@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # function definitions
 fun fn(x : int, a : bool) : integer = (
 	# expression { where definitions }
@@ -30,3 +31,28 @@ typ int : integer;
 typ bool : logical;
 
 fun printf ( x : string ) : int = (x)
+=======
+typ vector3 : struct {
+	var x : integer;
+	var y : integer;
+	var z : integer
+};
+
+typ vec3 : struct {
+	var x : integer;
+	var y : integer;
+	var z : logical
+};
+
+fun manhatanDist(x : vector3) : integer = (
+	x.x + x.y + x.z
+);
+
+var tst : vector3;
+
+var x : string;
+
+fun test (a : integer) : vec3 = (
+	tst
+)
+>>>>>>> structs

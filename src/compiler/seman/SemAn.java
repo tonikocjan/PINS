@@ -51,6 +51,28 @@ public class SemAn implements Visitor {
 				Report.dump(indent + 2, "#typed as " + typ.toString());
 		}
 		indent += 2; arrType.type.accept(this); indent -= 2;
+	}		
+
+	@Override
+	public void visit(AbsPtrType ptrType) {
+		Report.dump(indent, "AbsPtrType " + ptrType.position.toString() + ":");		
+		{
+			SemType typ = SymbDesc.getType(ptrType);
+			if (typ != null)
+				Report.dump(indent + 2, "#typed as " + typ.toString());
+		}
+		indent += 2; ptrType.type.accept(this); indent -= 2;
+	}
+	
+	@Override
+	public void visit(AbsStructType structType) {
+		Report.dump(indent, "AbsStructType " + structType.position.toString() + ": " + structType.getName());		
+		{
+			SemType typ = SymbDesc.getType(structType);
+			if (typ != null)
+				Report.dump(indent + 2, "#typed as " + typ.toString());
+		}
+		indent += 2; structType.getDefinitions().accept(this); indent -= 2;
 	}
 	
 	public void visit(AbsAtomConst atomConst) {
@@ -141,6 +163,9 @@ public class SemAn implements Visitor {
 			break;
 		case AbsBinExpr.ASSIGN:
 			Report.dump(indent, "AbsBinExpr " + binExpr.position.toString() + ": ASSIGN");
+			break;
+		case AbsBinExpr.DOT:
+			Report.dump(indent, "AbsBinExpr " + binExpr.position.toString() + ": DOT");
 			break;
 		default:
 			Report.error("Internal error :: compiler.abstr.Abstr.visit(AbsBinExpr)");
@@ -352,12 +377,6 @@ public class SemAn implements Visitor {
 		}
 		indent += 2; whileStmt.cond.accept(this); indent -= 2;
 		indent += 2; whileStmt.body.accept(this); indent -= 2;
-	}
-
-	@Override
-	public void visit(AbsPtrType acceptor) {
-		// TODO Auto-generated method stub
-		
 	}
 	
 }

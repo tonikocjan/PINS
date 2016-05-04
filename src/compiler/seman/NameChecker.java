@@ -27,6 +27,16 @@ public class NameChecker implements Visitor {
 	public void visit(AbsPtrType acceptor) {
 		acceptor.type.accept(this);
 	}
+	
+	@Override
+	public void visit(AbsStructType acceptor) {
+		TraversalState tmp = currentState;
+		SymbTable.newScope();
+		acceptor.getDefinitions().accept(this);
+		SymbTable.oldScope();
+		currentState = tmp;
+	}
+
 
 	@Override
 	public void visit(AbsAtomConst acceptor) {
@@ -41,7 +51,9 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsBinExpr acceptor) {
 		acceptor.expr1.accept(this);
-		acceptor.expr2.accept(this);
+		
+		if (acceptor.oper != AbsBinExpr.DOT)
+			acceptor.expr2.accept(this);
 	}
 
 	@Override
@@ -77,7 +89,7 @@ public class NameChecker implements Visitor {
 
 		if (definition == null)
 			Report.error(acceptor.position, "Error, function \""
-					+ acceptor.name + "\" undefined");
+					+ acceptor.name + "\" is undefined");
 
 		SymbDesc.setNameDef(acceptor, definition);
 

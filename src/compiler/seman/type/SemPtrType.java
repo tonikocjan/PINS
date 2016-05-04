@@ -26,4 +26,5 @@ public class SemPtrType extends SemType {
 	public int size() {
 		return 4;
 	}
+
 }
