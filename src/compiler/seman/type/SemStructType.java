@@ -11,6 +11,7 @@ public class SemStructType extends SemType {
 
 	private final LinkedHashMap<String, SemType> members = new LinkedHashMap<>();
 	private final String name;
+	private final int size;
 
 	/**
 	 * Ustvari nov opis strukture.
@@ -23,8 +24,12 @@ public class SemStructType extends SemType {
 		if (names.size() != types.size())
 			Report.error("Internal error :: compiler.seman.type.SemStructType: names size not equal types size");
 
-		for (int i = 0; i < names.size(); i++)
+		int size = 0;
+		for (int i = 0; i < names.size(); i++) {
 			members.put(names.get(i), types.get(i));
+			size += types.get(i).size();
+		}
+		this.size = size;
 		this.name = name;
 	}
 	
@@ -67,6 +72,11 @@ public class SemStructType extends SemType {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+
+	@Override
+	public int size() {
+		return size;
 	}
 
 }

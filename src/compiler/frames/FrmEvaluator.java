@@ -1,149 +1,150 @@
 package compiler.frames;
 
-import compiler.abstr.*;
-import compiler.abstr.tree.AbsArrType;
-import compiler.abstr.tree.AbsAtomConst;
-import compiler.abstr.tree.AbsAtomType;
-import compiler.abstr.tree.AbsBinExpr;
-import compiler.abstr.tree.AbsDefs;
-import compiler.abstr.tree.AbsExprs;
-import compiler.abstr.tree.AbsFor;
-import compiler.abstr.tree.AbsFunCall;
-import compiler.abstr.tree.AbsFunDef;
-import compiler.abstr.tree.AbsIfThen;
-import compiler.abstr.tree.AbsIfThenElse;
-import compiler.abstr.tree.AbsPar;
-import compiler.abstr.tree.AbsPtrType;
-import compiler.abstr.tree.AbsTypeDef;
-import compiler.abstr.tree.AbsTypeName;
-import compiler.abstr.tree.AbsUnExpr;
-import compiler.abstr.tree.AbsVarDef;
-import compiler.abstr.tree.AbsVarName;
-import compiler.abstr.tree.AbsWhere;
-import compiler.abstr.tree.AbsWhile;
+import compiler.Report;
+import compiler.abstr.Visitor;
+import compiler.abstr.tree.*;
+import compiler.seman.SymbDesc;
 
 public class FrmEvaluator implements Visitor {
 
+	private int currentLevel = 0;
+	private FrmFrame currentFrame = null;
+
 	@Override
 	public void visit(AbsArrType acceptor) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(AbsPtrType acceptor) {
-		// TODO Auto-generated method stub
-		
+
+	}
+
+	@Override
+	public void visit(AbsStructType acceptor) {
+
 	}
 
 	@Override
 	public void visit(AbsAtomConst acceptor) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(AbsAtomType acceptor) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(AbsBinExpr acceptor) {
-		// TODO Auto-generated method stub
-		
+		acceptor.expr1.accept(this);
+		acceptor.expr2.accept(this);
 	}
 
 	@Override
 	public void visit(AbsDefs acceptor) {
-		// TODO Auto-generated method stub
-		
+		for (int def = 0; def < acceptor.numDefs(); def++)
+			acceptor.def(def).accept(this);
 	}
 
 	@Override
 	public void visit(AbsExprs acceptor) {
-		// TODO Auto-generated method stub
-		
+		for (int i = 0; i < acceptor.numExprs(); i++)
+			acceptor.expr(i).accept(this);
 	}
 
 	@Override
 	public void visit(AbsFor acceptor) {
-		// TODO Auto-generated method stub
-		
+		acceptor.lo.accept(this);
+		acceptor.hi.accept(this);
+		acceptor.body.accept(this);
 	}
 
 	@Override
 	public void visit(AbsFunCall acceptor) {
-		// TODO Auto-generated method stub
-		
+		int parSize = 0;
+		for (int i = 0; i < acceptor.numArgs(); i++)
+			parSize += SymbDesc.getType(acceptor.arg(i)).size();
+
+		currentFrame.sizeArgs = Math.max(currentFrame.sizeArgs, parSize);
 	}
 
 	@Override
 	public void visit(AbsFunDef acceptor) {
-		// TODO Auto-generated method stub
-		
+		FrmFrame frame = new FrmFrame(acceptor, currentLevel);
+		FrmDesc.setFrame(acceptor, frame);
+
+		FrmFrame tmp = currentFrame;
+		currentFrame = frame;
+
+		for (int i = 0; i < acceptor.numPars(); i++)
+			acceptor.par(i).accept(this);
+
+		currentLevel++;
+
+		acceptor.expr.accept(this);
+
+		currentFrame = tmp;
+		currentLevel--;
 	}
 
 	@Override
-	public void visit(AbsIfThen accpetor) {
-		// TODO Auto-generated method stub
-		
+	public void visit(AbsIfThen acceptor) {
+		acceptor.cond.accept(this);
+		acceptor.thenBody.accept(this);
 	}
 
 	@Override
-	public void visit(AbsIfThenElse accpetor) {
-		// TODO Auto-generated method stub
-		
+	public void visit(AbsIfThenElse acceptor) {
+		acceptor.cond.accept(this);
+		acceptor.thenBody.accept(this);
+		acceptor.elseBody.accept(this);
 	}
 
 	@Override
 	public void visit(AbsPar acceptor) {
-		// TODO Auto-generated method stub
-		
+		FrmDesc.setAccess(acceptor, new FrmParAccess(acceptor, currentFrame));
 	}
 
 	@Override
 	public void visit(AbsTypeDef acceptor) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(AbsTypeName acceptor) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(AbsUnExpr acceptor) {
-		// TODO Auto-generated method stub
-		
+		acceptor.expr.accept(this);
 	}
 
 	@Override
 	public void visit(AbsVarDef acceptor) {
-		// TODO Auto-generated method stub
-		
+		if (currentFrame == null)
+			FrmDesc.setAccess(acceptor, new FrmVarAccess(acceptor));
+		else
+			FrmDesc.setAccess(acceptor,
+					new FrmLocAccess(acceptor, currentFrame));
 	}
 
 	@Override
 	public void visit(AbsVarName acceptor) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void visit(AbsWhere acceptor) {
-		// TODO Auto-generated method stub
-		
+		acceptor.defs.accept(this);
+		acceptor.expr.accept(this);
 	}
 
 	@Override
 	public void visit(AbsWhile acceptor) {
-		// TODO Auto-generated method stub
-		
+		acceptor.cond.accept(this);
+		acceptor.body.accept(this);
 	}
-	
-	// TODO
-	
+
 }
