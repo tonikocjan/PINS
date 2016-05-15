@@ -8,19 +8,22 @@ import compiler.*;
  * @author sliva
  */
 public class ImcBINOP extends ImcExpr {
-
-	public static final int ADD = 0;
-	public static final int SUB = 1;
-	public static final int MUL = 2;
-	public static final int DIV = 3;
-	public static final int EQU = 4;
-	public static final int NEQ = 5;
+	public static final int OR = 0;
+	public static final int AND = 1;
+	public static final int EQU = 2;
+	public static final int NEQ = 3;
+	public static final int LEQ = 4;
+	public static final int GEQ = 5;
 	public static final int LTH = 6;
 	public static final int GTH = 7;
-	public static final int LEQ = 8;
-	public static final int GEQ = 9;
-	public static final int AND = 10;
-	public static final int OR  = 11;
+	public static final int ADD = 8;
+	public static final int SUB = 9;
+	public static final int MUL = 10;
+	public static final int DIV = 11;
+	public static final int MOD = 12;
+	public static final int DOT = 13;
+	public static final int ARR = 14;
+	public static final int ASSIGN = 15;
 
 	/** Operator.  */
 	public int op;

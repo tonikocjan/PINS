@@ -61,10 +61,10 @@ public class FrmFrame {
 		this.level = level;
 		this.label = (level == 1 ? FrmLabel.newLabel(fun.name) : FrmLabel.newLabel());
 		this.numPars = 0;
-		this.sizePars = 8;
+		this.sizePars = 4;
 		this.locVars = new LinkedList<FrmLocAccess> ();
 		this.sizeLocs = 0;
-		this.sizeFPRA = 16;
+		this.sizeFPRA = 8;
 		this.sizeTmps = 0;
 		this.sizeRegs = 0;
 		this.sizeArgs = 0;

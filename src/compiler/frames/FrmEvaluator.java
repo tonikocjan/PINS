@@ -1,13 +1,12 @@
 package compiler.frames;
 
-import compiler.Report;
 import compiler.abstr.Visitor;
 import compiler.abstr.tree.*;
 import compiler.seman.SymbDesc;
 
 public class FrmEvaluator implements Visitor {
 
-	private int currentLevel = 0;
+	private int currentLevel = 1;
 	private FrmFrame currentFrame = null;
 
 	@Override
@@ -62,7 +61,7 @@ public class FrmEvaluator implements Visitor {
 
 	@Override
 	public void visit(AbsFunCall acceptor) {
-		int parSize = 0;
+		int parSize = 4;
 		for (int i = 0; i < acceptor.numArgs(); i++)
 			parSize += SymbDesc.getType(acceptor.arg(i)).size();
 
