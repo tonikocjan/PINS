@@ -15,6 +15,9 @@ public class ImcDataChunk extends ImcChunk {
 
 	/** Velikost spremenljivke v pomnilniku.  */
 	public int size;
+	
+	/**  Inicializacija spremenljivke v labeli */
+	public String data = null;
 
 	/**
 	 * Ustvari novfragment podatkov.
@@ -29,7 +32,8 @@ public class ImcDataChunk extends ImcChunk {
 
 	@Override
 	public void dump() {
-		Report.dump(0, "DATA CHUNK: label=" + label.name() + " size=" + size);
+		String tmp =  data == null ? "" : " .BYTE: " + data;
+		Report.dump(0, "DATA CHUNK: label=" + label.name() + " size=" + size + tmp);
 	}
 
 }

@@ -309,6 +309,7 @@ public class TypeChecker implements Visitor {
 	public void visit(AbsPar acceptor) {
 		acceptor.type.accept(this);
 		SemType type = SymbDesc.getType(acceptor.type);
+		
 		SymbDesc.setType(acceptor, type);
 	}
 
