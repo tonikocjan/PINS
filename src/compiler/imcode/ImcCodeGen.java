@@ -131,7 +131,7 @@ public class ImcCodeGen implements Visitor {
 			String var = ((AbsVarName) acceptor.expr2).name;
 			int offset = type.offsetOf(var);
 			
-			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, e1, new ImcCONST(offset)));
+			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, ((ImcMEM)e1).expr, new ImcCONST(offset)));
 		}
 
 		ImcDesc.setImcCode(acceptor, code);
