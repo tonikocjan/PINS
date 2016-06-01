@@ -344,4 +344,10 @@ public class Abstr implements Visitor {
 		indent -= 2;
 	}
 
+	@Override
+	public void visit(AbsImportDef imp) {
+		Report.dump(indent, "AbsImportDef " + imp.position.toString() + ":");
+		Report.dump(indent+2, "Filename: " + imp.fileName);
+	}
+
 }

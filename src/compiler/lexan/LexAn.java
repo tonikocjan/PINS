@@ -32,7 +32,7 @@ public class LexAn {
 	/**
 	 * Map containing all reserved keywords.
 	 */
-	private static final String[] keywords = new String[]{"logical", "integer", "string", "arr", "else", "for", "fun", "if", "then", "typ", "var", "where", "while", "ptr", "struct"};
+	private static final String[] keywords = new String[]{"logical", "integer", "string", "arr", "else", "for", "fun", "if", "then", "typ", "var", "where", "while", "ptr", "struct", "import"};
 	private static Map<String, Integer> keywordsMap = null;
 
 	/**

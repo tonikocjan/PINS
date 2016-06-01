@@ -100,7 +100,7 @@ public class Symbol {
 		case Token.COMMA     : tokenName = "COMMA"     ; break;
 		
 		case Token.KW_PTR 	 : tokenName = "POINTER"   ; break;
-		case Token.KW_STRUCT : tokenName = "STRUCT"   ; break;
+		case Token.KW_STRUCT : tokenName = "STRUCT"    ; break;
 		
 		case Token.ASSIGN    : tokenName = "ASSIGN"    ; break;
 		
@@ -118,6 +118,8 @@ public class Symbol {
 		case Token.KW_VAR    : tokenName = "VAR"       ; break;
 		case Token.KW_WHERE  : tokenName = "WHERE"     ; break;
 		case Token.KW_WHILE  : tokenName = "WHILE"     ; break;
+		
+		case Token.KW_IMPORT : tokenName = "IMPORT"    ; break;
 		
 		default:
 			Report.error("Internal error: token=" + token + " in compiler.lexan.Symbol.toString().");

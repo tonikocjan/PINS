@@ -63,4 +63,6 @@ public class Token {
 
 	/** Vrsta simbola: ključna beseda ptr.  */						public static final int KW_PTR 		= 43;
 	/** Vrsta simbola: ključna beseda struct.  */					public static final int KW_STRUCT   = 44;
+	
+	/** Vrsta simbola: ključna beseda import.  */ 					public static final int KW_IMPORT 	= 45;
 }

@@ -378,4 +378,9 @@ public class SemAn implements Visitor {
 		indent += 2; whileStmt.cond.accept(this); indent -= 2;
 		indent += 2; whileStmt.body.accept(this); indent -= 2;
 	}
+
+	@Override
+	public void visit(AbsImportDef acceptor) {
+		
+	}
 }

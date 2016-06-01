@@ -118,6 +118,10 @@ public class SynAn {
 			dump("definition -> var_definition");
 			definition = parseVarDefinition();
 			break;
+		case Token.KW_IMPORT:
+			dump("definition -> import_definition");
+			definition = parseImportDefinition();
+			break;
 		default:
 			if (symbol.token != Token.EOF)
 				Report.error(symbol.position, "Syntax error on token \""
@@ -238,6 +242,14 @@ public class SynAn {
 				+ previous.lexeme + "\", expected keyword \"var\"");
 
 		return null;
+	}
+	
+	private AbsImportDef parseImportDefinition() {
+		Position pos = symbol.position;
+		skip(new Symbol(Token.STR_CONST, "", null));
+		String file = symbol.lexeme;
+		skip();
+		return new AbsImportDef(pos, file);
 	}
 	
 	private AbsType parsePointer() {

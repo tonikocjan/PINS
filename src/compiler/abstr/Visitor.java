@@ -32,4 +32,5 @@ public interface Visitor {
 	public void visit(AbsVarName    acceptor);
 	public void visit(AbsWhere      acceptor);
 	public void visit(AbsWhile      acceptor);
+	public void visit(AbsImportDef  acceptor);
 }

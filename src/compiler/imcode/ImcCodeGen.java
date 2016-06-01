@@ -17,6 +17,7 @@ import compiler.abstr.tree.AbsFunCall;
 import compiler.abstr.tree.AbsFunDef;
 import compiler.abstr.tree.AbsIfThen;
 import compiler.abstr.tree.AbsIfThenElse;
+import compiler.abstr.tree.AbsImportDef;
 import compiler.abstr.tree.AbsPar;
 import compiler.abstr.tree.AbsPtrType;
 import compiler.abstr.tree.AbsStructType;
@@ -441,6 +442,12 @@ public class ImcCodeGen implements Visitor {
 		statements.stmts.add(new ImcLABEL(l3));
 
 		ImcDesc.setImcCode(acceptor, statements);
+	}
+
+	@Override
+	public void visit(AbsImportDef acceptor) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

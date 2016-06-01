@@ -496,4 +496,10 @@ public class Frames implements Visitor {
 		indent -= 2;
 	}
 
+	@Override
+	public void visit(AbsImportDef acceptor) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
