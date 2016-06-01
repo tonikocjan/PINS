@@ -140,12 +140,13 @@ public class TypeChecker implements Visitor {
 		 * identifier.identifier
 		 */
 		if (oper == AbsBinExpr.DOT) {
-			if (!(acceptor.expr1 instanceof AbsVarName && 
-					acceptor.expr2 instanceof AbsVarName))
-				Report.error(acceptor.position,
-						"Expression must be variable name");
+//			if (!(acceptor.expr1 instanceof AbsVarName && 
+//					acceptor.expr2 instanceof AbsVarName))
+//				Report.error(acceptor.position,
+//						"Expression must be variable name");
 			
 			SemTypeName typ_ = (SemTypeName) t1;
+			
 			if (!(typ_.getType() instanceof SemStructType))
 				Report.error(acceptor.position, 
 						"Left expression's type must be a structure to use DOT operator");

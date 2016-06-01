@@ -37,6 +37,17 @@ public class SemStructType extends SemType {
 		return members;
 	}
 	
+	public int offsetOf(String name) {
+		int offset = 0;
+		
+		for (Map.Entry<String, SemType> entry : members.entrySet()) {
+			if (name.equals(entry.getKey())) break;
+			offset += entry.getValue().size();
+		}
+		
+		return offset;
+	}
+	
 	public String getName() {
 		return name;
 	}

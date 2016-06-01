@@ -1,8 +1,19 @@
 package compiler.seman;
 
+import java.util.Vector;
+
 import compiler.Report;
 import compiler.abstr.*;
 import compiler.abstr.tree.*;
+import compiler.frames.FrmDesc;
+import compiler.frames.FrmFrame;
+import compiler.frames.FrmLabel;
+import compiler.imcode.ImcDesc;
+import compiler.interpreter.Interpreter;
+import compiler.seman.type.SemAtomType;
+import compiler.seman.type.SemFunType;
+import compiler.seman.type.SemPtrType;
+import compiler.seman.type.SemType;
 
 /**
  * Preverjanje in razresevanje imen (razen imen komponent).
@@ -17,6 +28,107 @@ public class NameChecker implements Visitor {
 	}
 
 	private TraversalState currentState;
+	private AbsFunDef main = null;
+	
+	public AbsFunDef getMain() {
+		return main;
+	}
+
+	public NameChecker() {
+		try {
+			{
+				Vector<AbsPar> pars = new Vector<>();
+				Vector<SemType> parTypes = new Vector<>();
+				parTypes.add(new SemAtomType(SemAtomType.INT));
+				
+				pars.add(new AbsPar(null, "x", new AbsAtomType(null,
+						AbsAtomType.INT)));
+				
+				AbsFunDef putInt = new AbsFunDef(null, "putInt", pars,
+						new AbsAtomType(null, AbsAtomType.INT), new AbsExpr(
+								null) {
+							@Override
+							public void accept(Visitor visitor) {
+							}
+						});
+				SymbTable.ins("putInt", putInt);
+				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.INT)));
+				
+				FrmFrame frame = new FrmFrame(putInt, 1);
+				frame.numPars = 1;
+				frame.sizePars = 4;
+				frame.label = FrmLabel.newLabel("putInt");
+				FrmDesc.setFrame(putInt, frame);
+			}
+			{
+				Vector<AbsPar> pars = new Vector<>();
+				Vector<SemType> parTypes = new Vector<>();
+				parTypes.add(new SemPtrType(new SemAtomType(SemAtomType.INT)));
+				pars.add(new AbsPar(null, "x", new AbsAtomType(null,
+						AbsAtomType.INT)));
+				AbsFunDef putInt = new AbsFunDef(null, "getInt", pars,
+						new AbsAtomType(null, AbsAtomType.INT), new AbsExpr(
+								null) {
+							@Override
+							public void accept(Visitor visitor) {
+							}
+						});
+				SymbTable.ins("getInt", putInt);
+				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.INT)));
+				
+				FrmFrame frame = new FrmFrame(putInt, 1);
+				frame.numPars = 1;
+				frame.sizePars = 4;
+				frame.label = FrmLabel.newLabel("getInt");
+				FrmDesc.setFrame(putInt, frame);
+			}
+			{
+				Vector<AbsPar> pars = new Vector<>();
+				Vector<SemType> parTypes = new Vector<>();
+				parTypes.add(new SemAtomType(SemAtomType.STR));
+				pars.add(new AbsPar(null, "x", new AbsAtomType(null,
+						AbsAtomType.STR)));
+				AbsFunDef putInt = new AbsFunDef(null, "putString", pars,
+						new AbsAtomType(null, AbsAtomType.INT), new AbsExpr(
+								null) {
+							@Override
+							public void accept(Visitor visitor) {
+							}
+						});
+				SymbTable.ins("putString", putInt);
+				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.INT)));
+				
+				FrmFrame frame = new FrmFrame(putInt, 1);
+				frame.numPars = 1;
+				frame.sizePars = 4;
+				frame.label = FrmLabel.newLabel("putString");
+				FrmDesc.setFrame(putInt, frame);
+			}
+			{
+				Vector<AbsPar> pars = new Vector<>();
+				Vector<SemType> parTypes = new Vector<>();
+				parTypes.add(new SemPtrType(new SemAtomType(SemAtomType.STR)));
+				pars.add(new AbsPar(null, "x", new AbsAtomType(null,
+						AbsAtomType.STR)));
+				AbsFunDef putInt = new AbsFunDef(null, "getString", pars,
+						new AbsAtomType(null, AbsAtomType.STR), new AbsExpr(
+								null) {
+							@Override
+							public void accept(Visitor visitor) {
+							}
+						});
+				SymbTable.ins("getString", putInt);
+				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.STR)));
+				
+				FrmFrame frame = new FrmFrame(putInt, 1);
+				frame.numPars = 1;
+				frame.sizePars = 4;
+				frame.label = FrmLabel.newLabel("getString");
+				FrmDesc.setFrame(putInt, frame);
+			}
+		} catch (Exception e) {
+		}
+	}
 
 	@Override
 	public void visit(AbsArrType acceptor) {
@@ -27,7 +139,7 @@ public class NameChecker implements Visitor {
 	public void visit(AbsPtrType acceptor) {
 		acceptor.type.accept(this);
 	}
-	
+
 	@Override
 	public void visit(AbsStructType acceptor) {
 		TraversalState tmp = currentState;
@@ -36,7 +148,6 @@ public class NameChecker implements Visitor {
 		SymbTable.oldScope();
 		currentState = tmp;
 	}
-
 
 	@Override
 	public void visit(AbsAtomConst acceptor) {
@@ -51,7 +162,7 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsBinExpr acceptor) {
 		acceptor.expr1.accept(this);
-		
+
 		if (acceptor.oper != AbsBinExpr.DOT)
 			acceptor.expr2.accept(this);
 	}
@@ -99,6 +210,8 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsFunDef acceptor) {
+		if (acceptor.name.equals("main")) main = acceptor;
+		
 		if (currentState == TraversalState.ETS_prototypes) {
 			try {
 				SymbTable.ins(acceptor.name, acceptor);
@@ -161,10 +274,10 @@ public class NameChecker implements Visitor {
 	@Override
 	public void visit(AbsTypeName acceptor) {
 		AbsDef definition = SymbTable.fnd(acceptor.name);
-		
+
 		if (definition == null)
-			Report.error(acceptor.position, 
-					"Type \"" + acceptor.name + "\" is undefined");
+			Report.error(acceptor.position, "Type \"" + acceptor.name
+					+ "\" is undefined");
 
 		SymbDesc.setNameDef(acceptor, definition);
 	}

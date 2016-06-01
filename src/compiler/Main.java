@@ -1,12 +1,15 @@
 package compiler;
 
+import compiler.lincode.CodeGenerator;
 import compiler.lexan.*;
 import compiler.synan.*;
 import compiler.abstr.*;
 import compiler.abstr.tree.*;
 import compiler.seman.*;
+import compiler.seman.type.SemFunType;
 import compiler.frames.*;
 import compiler.imcode.*;
+import compiler.interpreter.Interpreter;
 
 /**
  * Osnovni razred prevajalnika, ki vodi izvajanje celotnega procesa prevajanja.
@@ -19,13 +22,13 @@ public class Main {
 	private static String sourceFileName;
 
 	/** Seznam vseh faz prevajalnika. */
-	private static String allPhases = "(lexan|synan|ast|seman|frames|imcode)";
+	private static String allPhases = "(lexan|synan|ast|seman|frames|imcode|interpret)";
 
 	/** Doloca zadnjo fazo prevajanja, ki se bo se izvedla. */
-	private static String execPhase = "imcode";
+	private static String execPhase = "interpret";
 
 	/** Doloca faze, v katerih se bodo izpisali vmesni rezultati. */
-	private static String dumpPhases = "imcode";
+	private static String dumpPhases = "interpret";
 
 	/**
 	 * Metoda, ki izvede celotni proces prevajanja.
@@ -54,6 +57,11 @@ public class Main {
 						dumpPhases = phases;
 					else
 						Report.warning("Illegal dump phases '" + phases + "' ignored.");
+					continue;
+				}
+				if (args[argc].startsWith("--debug=")) {
+					String debug = args[argc].substring("--debug=".length());
+					Interpreter.debug = debug.equals("true"); 
 					continue;
 				}
 				// Neznano stikalo.
@@ -91,8 +99,10 @@ public class Main {
 			if (execPhase.equals("ast")) break;
 			// Semanticna analiza.
 			SemAn semAn = new SemAn(dumpPhases.contains("seman"));
-			source.accept(new NameChecker());
+			NameChecker nc = new NameChecker();
+			source.accept(nc);
 			source.accept(new TypeChecker());
+			AbsFunDef mainFunction = nc.getMain();
 			semAn.dump(source);
 			if (execPhase.equals("seman")) break;
 			// Klicni zapisi.
@@ -106,6 +116,45 @@ public class Main {
 			source.accept(imcodegen);
 			imcode.dump(imcodegen.chunks);
 			if (execPhase.equals("imcode")) break;
+			
+			// Izvajanje linearizirane vmesne kode
+			ImcCodeChunk main = null;
+			
+			int offset = 0;
+			for (ImcChunk chnk : imcodegen.chunks) {
+				if (chnk instanceof ImcCodeChunk) {
+					ImcCodeChunk fn = (ImcCodeChunk) chnk;
+					fn.lincode = fn.imcode.linear();
+					if (fn.frame.label.name().equals("_main")) {
+						main = fn;
+						
+						if (mainFunction.numPars() > 1 || !mainFunction.par(0).name.equals("i"))
+							Report.error(mainFunction.position, "Undefined reference to _main(i:integer)");
+					}
+					CodeGenerator.insertCode(fn.frame.label, fn);
+				}
+				else {
+					ImcDataChunk data = (ImcDataChunk) chnk;
+					Interpreter.locations.put(data.label, offset);
+					if (data.data != null)
+						Interpreter.stM(offset, data.data);
+					else
+						Interpreter.stM(offset, 0);
+						
+					offset += data.size;
+				}
+			}
+			if (main == null)
+				Report.error("Undefined reference to _main(i:integer)");
+			
+			imcode = new ImCode(dumpPhases.contains("interpret"));
+			imcode.dump(imcodegen.chunks);
+			
+			Interpreter.stM(Interpreter.getFP() + 4, 0);
+			ImcSEQ linearMainCode = main.imcode.linear();
+			new Interpreter(main.frame, linearMainCode);
+			
+			if (execPhase.equals("interpret")) break;
 			
 			// Neznana faza prevajanja.
 			if (! execPhase.equals(""))

@@ -2,11 +2,13 @@ package compiler.imcode;
 
 import java.util.*;
 
+import compiler.Report;
 import compiler.abstr.*;
 import compiler.abstr.tree.AbsArrType;
 import compiler.abstr.tree.AbsAtomConst;
 import compiler.abstr.tree.AbsAtomType;
 import compiler.abstr.tree.AbsBinExpr;
+import compiler.abstr.tree.AbsDef;
 import compiler.abstr.tree.AbsDefs;
 import compiler.abstr.tree.AbsExpr;
 import compiler.abstr.tree.AbsExprs;
@@ -31,15 +33,16 @@ import compiler.frames.FrmFrame;
 import compiler.frames.FrmLabel;
 import compiler.frames.FrmLocAccess;
 import compiler.frames.FrmParAccess;
+import compiler.frames.FrmTemp;
 import compiler.frames.FrmVarAccess;
 import compiler.seman.SymbDesc;
 import compiler.seman.type.SemArrType;
+import compiler.seman.type.SemStructType;
 import compiler.seman.type.SemType;
 
 public class ImcCodeGen implements Visitor {
 
 	public LinkedList<ImcChunk> chunks;
-
 	private FrmFrame currentFrame = null;
 
 	public ImcCodeGen() {
@@ -106,15 +109,15 @@ public class ImcCodeGen implements Visitor {
 
 		ImcCode code = null;
 
-		if (acceptor.oper >= 8 && acceptor.oper <= 11)
-			code = new ImcBINOP(acceptor.oper, e1, e2);
-		else if (acceptor.oper >= 0 && acceptor.oper <= 7)
+		if (acceptor.oper >= 0 && acceptor.oper <= 11)
 			code = new ImcBINOP(acceptor.oper, e1, e2);
 		else if (acceptor.oper == AbsBinExpr.ASSIGN) {
 			code = new ImcMOVE(e1, e2);
 		} else if (acceptor.oper == AbsBinExpr.ARR) {
-			int size = ((SemArrType) SymbDesc.getType(SymbDesc
-					.getNameDef(acceptor.expr1))).type.size();
+			// TODO zrihtej da bo zaznalo velikost spremenljivke
+			// trenutno je hardcodano not 4
+			int size = 4;
+			e1 = ((ImcMEM) e1).expr;
 			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, e1, new ImcBINOP(
 					ImcBINOP.MUL, e2, new ImcCONST(size))));
 		} else if (acceptor.oper == ImcBINOP.MOD) {
@@ -122,6 +125,13 @@ public class ImcCodeGen implements Visitor {
 			ImcBINOP mul = new ImcBINOP(ImcBINOP.MUL, div, e2);
 			ImcBINOP sub = new ImcBINOP(ImcBINOP.SUB, e1, mul);
 			code = sub;
+		} else if (acceptor.oper == AbsBinExpr.DOT) {
+			SemType t = SymbDesc.getType(acceptor.expr1).actualType();
+			SemStructType type = (SemStructType) t;
+			String var = ((AbsVarName) acceptor.expr2).name;
+			int offset = type.offsetOf(var);
+			
+			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, e1, new ImcCONST(offset)));
 		}
 
 		ImcDesc.setImcCode(acceptor, code);
@@ -142,7 +152,6 @@ public class ImcCodeGen implements Visitor {
 		}
 
 		ImcSEQ statements = new ImcSEQ();
-		ImcESEQ eseq = null;
 
 		for (int i = 0; i < acceptor.numExprs() - 1; i++) {
 			acceptor.expr(i).accept(this);
@@ -154,10 +163,16 @@ public class ImcCodeGen implements Visitor {
 				statements.stmts.add(new ImcEXP((ImcExpr) tmp));
 		}
 		acceptor.expr(acceptor.numExprs() - 1).accept(this);
-		eseq = new ImcESEQ(statements, (ImcExpr) ImcDesc.getImcCode(acceptor
-				.expr(acceptor.numExprs() - 1)));
+		ImcCode last = ImcDesc
+				.getImcCode(acceptor.expr(acceptor.numExprs() - 1));
 
-		ImcDesc.setImcCode(acceptor, eseq);
+		if (last instanceof ImcExpr)
+			ImcDesc.setImcCode(acceptor,
+					new ImcESEQ(statements, (ImcExpr) last));
+		else {
+			statements.stmts.add((ImcStmt) last);
+			ImcDesc.setImcCode(acceptor, statements);
+		}
 	}
 
 	@Override
@@ -168,7 +183,14 @@ public class ImcCodeGen implements Visitor {
 		acceptor.step.accept(this);
 		acceptor.body.accept(this);
 
-		ImcStmt body = (ImcStmt) ImcDesc.getImcCode(acceptor.body);
+		ImcCode bodyCode = ImcDesc.getImcCode(acceptor.body);
+		ImcStmt body = null;
+
+		if (bodyCode instanceof ImcStmt)
+			body = (ImcStmt) bodyCode;
+		else
+			body = new ImcEXP((ImcExpr) bodyCode);
+
 		ImcExpr step = (ImcExpr) ImcDesc.getImcCode(acceptor.step);
 		ImcExpr hi = (ImcExpr) ImcDesc.getImcCode(acceptor.hi);
 		ImcExpr lo = (ImcExpr) ImcDesc.getImcCode(acceptor.lo);
@@ -200,7 +222,9 @@ public class ImcCodeGen implements Visitor {
 		ImcCALL fnCall = new ImcCALL(frame.label);
 
 		int diff = currentFrame.level - frame.level;
-		if (diff != 0) {
+		if (diff == 0)
+			fnCall.args.add(new ImcCONST(0xFFAAFF));
+		else {
 			ImcExpr SL = new ImcTEMP(currentFrame.FP);
 			if (diff > 0)
 				for (int i = 0; i < diff + 1; i++)
@@ -225,19 +249,21 @@ public class ImcCodeGen implements Visitor {
 		acceptor.expr.accept(this);
 		ImcCode code = ImcDesc.getImcCode(acceptor.expr);
 
-		ImcExpr rv = null;
+		ImcExpr rv = new ImcTEMP(new FrmTemp());
 		ImcStmt fnCode = null;
 
 		if (code instanceof ImcESEQ) {
-			rv = ((ImcESEQ) code).expr;
-			fnCode = new ImcEXP((ImcESEQ) code);
-		} else {
-			rv = (ImcExpr) code;
-			fnCode = new ImcEXP(rv);
+			fnCode = ((ImcESEQ) code).stmt;
+			code = ((ImcESEQ) code).expr;
 		}
 
 		ImcSEQ seq = new ImcSEQ();
-		seq.stmts.add(fnCode);
+		// add function code
+		if (fnCode != null)
+			seq.stmts.add(fnCode);
+		// save result into temp
+		seq.stmts.add(new ImcMOVE(rv, (ImcExpr) code));
+		// move result from temp into RV
 		seq.stmts.add(new ImcMOVE(new ImcTEMP(currentFrame.RV), rv));
 
 		chunks.add(new ImcCodeChunk(frame, seq));
@@ -249,7 +275,14 @@ public class ImcCodeGen implements Visitor {
 		acceptor.cond.accept(this);
 		acceptor.thenBody.accept(this);
 
-		ImcStmt expr = (ImcStmt) ImcDesc.getImcCode(acceptor.thenBody);
+		ImcCode thenBody = ImcDesc.getImcCode(acceptor.thenBody);
+		ImcStmt expr = null;
+
+		if (thenBody instanceof ImcExpr)
+			expr = new ImcEXP((ImcExpr) thenBody);
+		else
+			expr = (ImcStmt) thenBody;
+
 		ImcExpr cond = (ImcExpr) ImcDesc.getImcCode(acceptor.cond);
 		FrmLabel l1 = FrmLabel.newLabel(), l2 = FrmLabel.newLabel();
 
@@ -316,23 +349,29 @@ public class ImcCodeGen implements Visitor {
 		if (acceptor.oper == AbsUnExpr.SUB) {
 			ImcDesc.setImcCode(acceptor, new ImcBINOP(ImcBINOP.SUB,
 					new ImcCONST(0), (ImcExpr) expr));
-		} else {
-			if (acceptor.oper == AbsUnExpr.NOT) {
-				AbsExpr e2 = new AbsAtomConst(null, AbsAtomConst.INT, "0");
-				AbsExpr cond = new AbsBinExpr(null, AbsBinExpr.EQU,
-						acceptor.expr, e2);
-				AbsExpr thenBody = new AbsAtomConst(null, AbsAtomConst.LOG,
-						"true");
-				AbsExpr elseBody = new AbsAtomConst(null, AbsAtomConst.LOG,
-						"false");
-				AbsIfThenElse not = new AbsIfThenElse(null, cond, thenBody,
-						elseBody);
-				not.accept(this);
+		} 
+		else if (acceptor.oper == AbsUnExpr.NOT) {
+			AbsExpr e2 = new AbsAtomConst(null, AbsAtomConst.INT, "0");
+			AbsExpr cond = new AbsBinExpr(null, AbsBinExpr.EQU, acceptor.expr,
+					e2);
+			AbsExpr thenBody = new AbsAtomConst(null, AbsAtomConst.LOG, "true");
+			AbsExpr elseBody = new AbsAtomConst(null, AbsAtomConst.LOG, "false");
+			AbsIfThenElse not = new AbsIfThenElse(null, cond, thenBody,
+					elseBody);
+			not.accept(this);
 
-				ImcDesc.setImcCode(acceptor, ImcDesc.getImcCode(not));
-			} else
-				ImcDesc.setImcCode(acceptor, expr);
+			ImcDesc.setImcCode(acceptor, ImcDesc.getImcCode(not));
 		}
+		else if (acceptor.oper == AbsUnExpr.MEM) {
+			if (expr instanceof ImcStmt) Report.error(acceptor.position, "Error");
+			ImcDesc.setImcCode(acceptor, ((ImcMEM) expr).expr);
+		}
+		else if (acceptor.oper == AbsUnExpr.VAL) {
+			if (expr instanceof ImcStmt) Report.error(acceptor.position, "Error");
+			ImcDesc.setImcCode(acceptor, new ImcMEM((ImcExpr) expr));
+		}
+		else
+			ImcDesc.setImcCode(acceptor, expr);
 	}
 
 	@Override

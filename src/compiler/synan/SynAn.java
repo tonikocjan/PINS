@@ -458,7 +458,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
-		case Token.DOT:
+//		case Token.DOT:
 		case Token.EOF:
 			dump("expression' -> e");
 			return e;
@@ -513,7 +513,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
-		case Token.DOT:
+//		case Token.DOT:
 		case Token.EOF:
 			dump("logical_ior_expression' -> e");
 			return e;
@@ -570,7 +570,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
-		case Token.DOT:
+//		case Token.DOT:
 		case Token.EOF:
 			dump("logical_and_expression' -> e");
 			return e;
@@ -624,7 +624,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
-		case Token.DOT:
+//		case Token.DOT:
 		case Token.EOF:
 			dump("compare_expression' -> e");
 			return e;
@@ -720,7 +720,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
-		case Token.DOT:
+//		case Token.DOT:
 		case Token.EOF:
 		case Token.EQU:
 		case Token.NEQ:
@@ -743,7 +743,7 @@ public class SynAn {
 
 			expr = parseMulExpression();
 			return parseAddExpression_(new AbsBinExpr(e.position,
-					AbsBinExpr.ADD, e, expr));
+					AbsBinExpr.SUB, e, expr));
 		default:
 			Report.error(symbol.position, "Syntax error on parseAddExpression_");
 		}
@@ -793,7 +793,7 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
-		case Token.DOT:
+//		case Token.DOT:
 		case Token.EOF:
 		case Token.EQU:
 		case Token.NEQ:
@@ -819,6 +819,12 @@ public class SynAn {
 			break;
 		case Token.MOD:
 			oper = AbsBinExpr.MOD;
+			dump("multiplicative_expression' -> prefix_expression multiplicative_expression'");
+			skip();
+			expr = parsePrefixExpression();
+			break;
+		case Token.DOT:
+			oper = AbsBinExpr.DOT;
 			dump("multiplicative_expression' -> prefix_expression multiplicative_expression'");
 			skip();
 			expr = parsePrefixExpression();
@@ -921,7 +927,6 @@ public class SynAn {
 		case Token.KW_THEN:
 		case Token.KW_ELSE:
 		case Token.COMMA:
-		case Token.DOT:
 		case Token.EOF:
 		case Token.EQU:
 		case Token.NEQ:
@@ -934,6 +939,7 @@ public class SynAn {
 		case Token.MUL:
 		case Token.DIV:
 		case Token.MOD:
+		case Token.DOT:
 			dump("postfix_expression' -> e");
 			return e;
 		case Token.LBRACKET:
@@ -997,20 +1003,6 @@ public class SynAn {
 				return new AbsFunCall(new Position(current.position,
 						absExprs.lastElement().position), current.lexeme,
 						absExprs);
-			} else if (symbol.token == Token.DOT) {
-				dump("atom_expression -> identifier.identifier");
-				
-				AbsVarName expr1 = new AbsVarName(current.position, current.lexeme);
-				skip(new Symbol(Token.IDENTIFIER, "identifier", null));
-				
-				AbsVarName expr2 = new AbsVarName(symbol.position, symbol.lexeme);
-				skip();
-				
-				return new AbsBinExpr(
-						new Position(expr1.position, expr2.position),
-						AbsBinExpr.DOT,
-						expr1,
-						expr2);
 			} else {
 				dump("atom_expression -> identifier");
 				return new AbsVarName(current.position, current.lexeme);
