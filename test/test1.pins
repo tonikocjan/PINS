@@ -1,4 +1,4 @@
-typ int : integer;	
+typ int : integer;
 
 # iterative fibonacci
 fun fib2(x : integer) : integer = (
@@ -11,7 +11,7 @@ fun fib2(x : integer) : integer = (
 		{f2 = fn}, 
 		0
 		)
-	}, 
+	},
 	fn
 ) {where var fn : integer; var f1 : integer; var f2 : integer; var i : integer};
 

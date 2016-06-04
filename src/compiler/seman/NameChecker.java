@@ -336,15 +336,37 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsImportDef acceptor) {
-		
 		if (currentState == TraversalState.ETS_imports) {
 			String tmp = Report.fileName;
 			Report.fileName = acceptor.fileName;
-			SynAn synAn = new SynAn(new LexAn(acceptor.fileName.substring(1,
-					acceptor.fileName.length() - 1), false), false);
-			AbsTree source = synAn.parse();
-			acceptor.imports = (AbsDefs) source;
-			acceptor.imports.accept(this);
+			
+			// parse the file
+			// TODO hardcodano notr test/
+			SynAn synAn = new SynAn(new LexAn("test/" + acceptor.fileName + ".pins", false), false);
+			AbsDefs source = (AbsDefs) synAn.parse();
+			
+			if (acceptor.definitions.size() > 0) {
+				Vector<AbsDef> definitions = new Vector<>();
+				for (int i = 0; i < source.numDefs(); i++) {
+					String name = null;
+					AbsDef d = source.def(i);
+					
+					if (d instanceof AbsVarDef)  name = ((AbsVarDef)  d).name;
+					if (d instanceof AbsTypeDef) name = ((AbsTypeDef) d).name;
+					if (d instanceof AbsFunDef)  name = ((AbsFunDef)  d).name;
+					
+					if (acceptor.definitions.contains(name))
+						definitions.add(d);
+				}
+
+				acceptor.imports = new AbsDefs(source.position, definitions);
+				acceptor.imports.accept(this);
+			}
+			else {
+				acceptor.imports = (AbsDefs) source;
+				acceptor.imports.accept(this);
+			}
+			
 			currentState = TraversalState.ETS_imports;
 			Report.fileName = tmp;
 		}

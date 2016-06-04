@@ -407,6 +407,9 @@ public class TypeChecker implements Visitor {
 	@Override
 	public void visit(AbsImportDef importDef) {
 		if (currentState == TraversalState.ETS_imports) {
+			String tmp = Report.fileName;
+			Report.fileName = importDef.fileName;
+			
 			for (TraversalState state : TraversalState.values()) {
 				currentState = state;
 				for (int def = 0; def < importDef.imports.numDefs(); def++)
@@ -414,6 +417,7 @@ public class TypeChecker implements Visitor {
 			}
 			
 			currentState = TraversalState.ETS_imports;
+			Report.fileName = tmp;
 		}
 	}
 

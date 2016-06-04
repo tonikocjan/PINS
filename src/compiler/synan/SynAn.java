@@ -246,10 +246,39 @@ public class SynAn {
 	
 	private AbsImportDef parseImportDefinition() {
 		Position pos = symbol.position;
-		skip(new Symbol(Token.STR_CONST, "", null));
+		skip(new Symbol(Token.IDENTIFIER, "IDENTIFIER", null));
 		String file = symbol.lexeme;
 		skip();
-		return new AbsImportDef(pos, file);
+		if (symbol.token == Token.DOT) {
+			skip();
+			return parseImportDefinition_(new AbsImportDef(pos, file));
+		}
+		else
+			return new AbsImportDef(pos, file);
+	}
+	
+	private AbsImportDef parseImportDefinition_(AbsImportDef def) {
+		switch (symbol.token) {
+		case Token.IDENTIFIER:
+			def.definitions.add(symbol.lexeme);
+			skip();
+			return parseImportDefinition__(def);
+		default:
+			Report.error(symbol.position, "Syntax error, expected \"IDENTIFIER\"");
+			return null;
+		}
+	}
+	
+	private AbsImportDef parseImportDefinition__(AbsImportDef def) {
+		switch (symbol.token) {
+		case Token.COMMA:
+			skip();
+			def.definitions.add(symbol.lexeme);
+			skip();
+			return parseImportDefinition__(def);
+		default:
+			return def;
+		}
 	}
 	
 	private AbsType parsePointer() {
