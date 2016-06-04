@@ -18,6 +18,9 @@ public class Report {
 
 	/** Doloca, ali se obvestila o poteku prevajanja izpisujejo ali ne. */
 	public static boolean reporting = true;
+	
+	/** Ime datoteke, ki jo trenutno prevajalnik prevaja */
+	public static String fileName = null;
 
 	/**
 	 * Izpise obvestilo o poteku prevajanja.
@@ -49,6 +52,9 @@ public class Report {
 	 *            Opozorilo o napaki.
 	 */
 	public static void warning(String message) {
+		if (fileName != null)
+			message = fileName + ":" + message;
+		
 		System.err.println(":-o " + message);
 	}
 
@@ -86,6 +92,9 @@ public class Report {
 	 *            Obvestilo o napaki.
 	 */
 	public static void error(String message) {
+		if (fileName != null)
+			message = fileName + ":" + message;
+		
 		System.err.println(":-( " + message);
 		System.exit(1);
 	}

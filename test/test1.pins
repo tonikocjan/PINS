@@ -1,32 +1,86 @@
-# function definitions
-fun fn(x : int, a : bool) : integer = (
-	# expression { where definitions }
-	x { where 
-		var x : integer
+typ int : integer;	
+
+# iterative fibonacci
+fun fib2(x : integer) : integer = (
+	{fn = 1},
+	{f1 = 1}, 
+	{f2 = 1}, 
+	{for i = 2, x, 1 : (
+		{fn = f1 + f2}, 
+		{f1 = f2}, 
+		{f2 = fn}, 
+		0
+		)
+	}, 
+	fn
+) {where var fn : integer; var f1 : integer; var f2 : integer; var i : integer};
+
+# recursicve fibonacci
+fun fib(x : integer) : integer = (
+	({ if x < 2 then 
+		{rez = 1} 
+	else 
+		{rez = fib(x - 1) + fib(x - 2)}}, rez) 
+	{where var rez : integer}
+);
+
+var tab : arr[10] integer;
+fun bubble(x : integer) : integer = (
+	{for i = 0, x, 1 : 
+		{for j = 0, x, 1: 
+			{if tab[j] > tab[i] then 
+				(
+				{tmp = tab[j]},
+				{tab[j] = tab[i]},
+				{tab[i] = tmp},0
+				) 
+				{ where var tmp : integer} 
+			}
+		}
 	},
-	{ if x > 10 & a == true then 
-	(
-		printf ( 'danes je lep dan' ),
-		'se en expression v if stavku'
-	)},
-	{ x = 10 * 10 },
-	(((((((x <= (-10 * --10)))))))) { where var b : logical }
-);
+	{ for i = 0, x, 1: putInt(tab[i]) },
+	1
+) { where var i : integer; var j : integer };
 
-# yet another function definition
-fun main (argv : arr[10] string, argc : int) : integer = (
-	printf ('prvi argument tabele =  + argv[5 * -5]'),
-	return ( EXIT_SUCCESS )
-	{
-		where
-		fun return ( i : int ) : int = (i);
-		var EXIT_SUCCESS : integer
-	}
-);
+# binary search
+fun binSearch(begin : integer, end:integer, x : integer) : logical = (
+	{ if end < begin then { result = false } 
+	else
+		({ pivot = begin + (end - begin) / 2 },
+		{
+		if tab[pivot] == x then 
+			{result = true} 
+		else 
+			{
+			if tab[pivot] < x then
+				{result = binSearch(pivot + 1, end, x)}
+			else
+				{result = binSearch(begin, pivot - 1, x)}
+			}
+		})
+	},
+	result
+) { where var pivot : integer; var result : logical };
 
-# type definition
-typ char : integer;
-typ int : integer;
-typ bool : logical;
 
-fun printf ( x : string ) : int = (x)
+# factorial
+fun fact(x : integer) : integer = (
+	{ if x == 0 then 
+		{res = 1} 
+	else
+		{ if x == 1 then 
+			{ res = 1 }
+		else 
+			{ res = fact(x - 1) * x }
+		}
+	},
+	res
+) { where var res : integer };
+
+
+# gcd
+fun gcd(x:integer, y:integer) : integer = (
+	{ res = x },
+	{ if y > 0 then {res = gcd(y, x % y) }},
+	res
+) { where var res : integer  }

@@ -20,7 +20,7 @@ public class TypeChecker implements Visitor {
 	 *
 	 */
 	private enum TraversalState {
-		ETS_typeNames, ETS_typeDefs, ETS_variables, ETS_prototypes, ETS_functions
+		ETS_imports, ETS_typeNames, ETS_typeDefs, ETS_variables, ETS_prototypes, ETS_functions
 	}
 
 	/**
@@ -272,6 +272,7 @@ public class TypeChecker implements Visitor {
 			acceptor.expr.accept(this);
 			SemType returnType = SymbDesc.getType(acceptor.expr);
 			SemFunType funType = (SemFunType) SymbDesc.getType(acceptor);
+			
 			if (!returnType.sameStructureAs(funType.resultType))
 				Report.error(acceptor.expr.position,
 						"Return type doesn't match");
@@ -404,9 +405,16 @@ public class TypeChecker implements Visitor {
 	}
 
 	@Override
-	public void visit(AbsImportDef acceptor) {
-		// TODO Auto-generated method stub
-		
+	public void visit(AbsImportDef importDef) {
+		if (currentState == TraversalState.ETS_imports) {
+			for (TraversalState state : TraversalState.values()) {
+				currentState = state;
+				for (int def = 0; def < importDef.imports.numDefs(); def++)
+					importDef.imports.def(def).accept(this);
+			}
+			
+			currentState = TraversalState.ETS_imports;
+		}
 	}
 
 }

@@ -6,7 +6,6 @@ import compiler.synan.*;
 import compiler.abstr.*;
 import compiler.abstr.tree.*;
 import compiler.seman.*;
-import compiler.seman.type.SemFunType;
 import compiler.frames.*;
 import compiler.imcode.*;
 import compiler.interpreter.Interpreter;
@@ -79,6 +78,8 @@ public class Main {
 
 		// Odpiranje datoteke z vmesnimi rezultati.
 		if (dumpPhases != null) Report.openDumpFile(sourceFileName);
+		
+		Report.fileName = sourceFileName;
 
 		// Izvajanje faz prevajanja.
 		while (true) {
@@ -146,6 +147,9 @@ public class Main {
 			}
 			if (main == null)
 				Report.error("Undefined reference to _main(i:integer)");
+
+			System.out.printf(":-) Done.\n");
+			System.out.printf("----- Executing file %s -----\n", sourceFileName);
 			
 			imcode = new ImCode(dumpPhases.contains("interpret"));
 			imcode.dump(imcodegen.chunks);
@@ -164,7 +168,6 @@ public class Main {
 		// Zapiranje datoteke z vmesnimi rezultati.
 		if (dumpPhases != null) Report.closeDumpFile();
 
-		System.out.printf(":-) Done.\n");
 		System.exit(0);
 	}
 }

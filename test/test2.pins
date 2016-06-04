@@ -1,7 +1,21 @@
-# type definitions
-typ int_arr : arr[10] integer;
-typ bool : logical;
+import 'test/test1.pins';
 
-# variable definitions
-var x : bool;
-var rollo : ragnar
+var str : string;
+
+fun main(i:integer) : int = (
+	{tab[0] = 5},
+	{tab[1] = -33},
+	{tab[2] = 20},
+	{tab[3] = -2},
+	{tab[4] = 8},
+	{tab[5] = 13},
+	{tab[6] = 55},
+	{tab[7] = -182},
+	{tab[8] = 5},
+	{tab[9] = 12},
+	
+	{ for i = 0, 10, 1: putInt(fib(i)) },
+	putString('abcdef'),
+	bubble(10),
+	0
+)

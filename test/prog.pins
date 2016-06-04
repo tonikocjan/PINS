@@ -1,58 +1,21 @@
-<<<<<<< HEAD
-# function definitions
-fun fn(x : int, a : bool) : integer = (
-	# expression { where definitions }
-	x { where 
-		var x : integer
-	},
-	{ if x > 10 & a == true then 
-	(
-		printf ( 'danes je lep dan' ),
-		'se en expression v if stavku'
-	)},
-	{ x = 10 * 10 },
-	(((((((x <= (-10 * --10)))))))) { where var b : logical }
-);
+import 'test/test1.pins';
 
-# yet another function definition
-fun main (argv : arr[10] string, argc : int) : integer = (
-	printf ('prvi argument tabele =  + argv[5 * -5]'),
-	return ( EXIT_SUCCESS )
-	{
-		where
-		fun return ( i : int ) : int = (i);
-		var EXIT_SUCCESS : integer
-	}
-);
+var str : string;
 
-# type definition
-typ char : integer;
-typ int : integer;
-typ bool : logical;
-
-fun printf ( x : string ) : int = (x)
-=======
-typ vector3 : struct {
-	var x : integer;
-	var y : integer;
-	var z : integer
-};
-
-typ vec3 : struct {
-	var x : integer;
-	var y : integer;
-	var z : logical
-};
-
-fun manhatanDist(x : vector3) : integer = (
-	x.x + x.y + x.z
-);
-
-var tst : vector3;
-
-var x : string;
-
-fun test (a : integer) : vec3 = (
-	tst
+fun main(i:integer) : int = (
+	{tab[0] = 5},
+	{tab[1] = -33},
+	{tab[2] = 20},
+	{tab[3] = -2},
+	{tab[4] = 8},
+	{tab[5] = 13},
+	{tab[6] = 55},
+	{tab[7] = -182},
+	{tab[8] = 5},
+	{tab[9] = 12},
+	
+	{ for i = 0, 10, 1: putInt(fib(i)) },
+	putString('abcdef'),
+	bubble(10),
+	0
 )
->>>>>>> structs

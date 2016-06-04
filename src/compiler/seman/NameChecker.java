@@ -8,12 +8,12 @@ import compiler.abstr.tree.*;
 import compiler.frames.FrmDesc;
 import compiler.frames.FrmFrame;
 import compiler.frames.FrmLabel;
-import compiler.imcode.ImcDesc;
-import compiler.interpreter.Interpreter;
+import compiler.lexan.LexAn;
 import compiler.seman.type.SemAtomType;
 import compiler.seman.type.SemFunType;
 import compiler.seman.type.SemPtrType;
 import compiler.seman.type.SemType;
+import compiler.synan.SynAn;
 
 /**
  * Preverjanje in razresevanje imen (razen imen komponent).
@@ -24,12 +24,12 @@ import compiler.seman.type.SemType;
 public class NameChecker implements Visitor {
 
 	private enum TraversalState {
-		ETS_types, ETS_prototypes, ETS_functions
+		ETS_imports, ETS_types, ETS_prototypes, ETS_functions
 	}
 
 	private TraversalState currentState;
 	private AbsFunDef main = null;
-	
+
 	public AbsFunDef getMain() {
 		return main;
 	}
@@ -40,10 +40,10 @@ public class NameChecker implements Visitor {
 				Vector<AbsPar> pars = new Vector<>();
 				Vector<SemType> parTypes = new Vector<>();
 				parTypes.add(new SemAtomType(SemAtomType.INT));
-				
+
 				pars.add(new AbsPar(null, "x", new AbsAtomType(null,
 						AbsAtomType.INT)));
-				
+
 				AbsFunDef putInt = new AbsFunDef(null, "putInt", pars,
 						new AbsAtomType(null, AbsAtomType.INT), new AbsExpr(
 								null) {
@@ -52,8 +52,9 @@ public class NameChecker implements Visitor {
 							}
 						});
 				SymbTable.ins("putInt", putInt);
-				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.INT)));
-				
+				SymbDesc.setType(putInt, new SemFunType(parTypes,
+						new SemAtomType(SemAtomType.INT)));
+
 				FrmFrame frame = new FrmFrame(putInt, 1);
 				frame.numPars = 1;
 				frame.sizePars = 4;
@@ -74,8 +75,9 @@ public class NameChecker implements Visitor {
 							}
 						});
 				SymbTable.ins("getInt", putInt);
-				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.INT)));
-				
+				SymbDesc.setType(putInt, new SemFunType(parTypes,
+						new SemAtomType(SemAtomType.INT)));
+
 				FrmFrame frame = new FrmFrame(putInt, 1);
 				frame.numPars = 1;
 				frame.sizePars = 4;
@@ -96,8 +98,9 @@ public class NameChecker implements Visitor {
 							}
 						});
 				SymbTable.ins("putString", putInt);
-				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.INT)));
-				
+				SymbDesc.setType(putInt, new SemFunType(parTypes,
+						new SemAtomType(SemAtomType.INT)));
+
 				FrmFrame frame = new FrmFrame(putInt, 1);
 				frame.numPars = 1;
 				frame.sizePars = 4;
@@ -118,8 +121,9 @@ public class NameChecker implements Visitor {
 							}
 						});
 				SymbTable.ins("getString", putInt);
-				SymbDesc.setType(putInt, new SemFunType(parTypes, new SemAtomType(SemAtomType.STR)));
-				
+				SymbDesc.setType(putInt, new SemFunType(parTypes,
+						new SemAtomType(SemAtomType.STR)));
+
 				FrmFrame frame = new FrmFrame(putInt, 1);
 				frame.numPars = 1;
 				frame.sizePars = 4;
@@ -210,8 +214,9 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsFunDef acceptor) {
-		if (acceptor.name.equals("main")) main = acceptor;
-		
+		if (acceptor.name.equals("main"))
+			main = acceptor;
+
 		if (currentState == TraversalState.ETS_prototypes) {
 			try {
 				SymbTable.ins(acceptor.name, acceptor);
@@ -331,8 +336,17 @@ public class NameChecker implements Visitor {
 
 	@Override
 	public void visit(AbsImportDef acceptor) {
-		// TODO Auto-generated method stub
 		
+		if (currentState == TraversalState.ETS_imports) {
+			String tmp = Report.fileName;
+			Report.fileName = acceptor.fileName;
+			SynAn synAn = new SynAn(new LexAn(acceptor.fileName.substring(1,
+					acceptor.fileName.length() - 1), false), false);
+			AbsTree source = synAn.parse();
+			acceptor.imports = (AbsDefs) source;
+			acceptor.imports.accept(this);
+			currentState = TraversalState.ETS_imports;
+			Report.fileName = tmp;
+		}
 	}
-
 }

@@ -147,9 +147,8 @@ public class FrmEvaluator implements Visitor {
 	}
 
 	@Override
-	public void visit(AbsImportDef acceptor) {
-		// TODO Auto-generated method stub
-		
+	public void visit(AbsImportDef importDef) {
+		importDef.imports.accept(this);
 	}
 
 }

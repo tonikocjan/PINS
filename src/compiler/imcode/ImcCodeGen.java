@@ -76,9 +76,11 @@ public class ImcCodeGen implements Visitor {
 		else {
 			FrmLabel l = FrmLabel.newLabel();
 			ImcDataChunk str = new ImcDataChunk(l, 4);
-			str.data = new String(acceptor.value + "\0");
+			str.data = new String(acceptor.value.substring(1,
+					acceptor.value.length() - 1)
+					+ "\0");
 			chunks.add(str);
-			ImcDesc.setImcCode(acceptor, new ImcNAME(l));
+			ImcDesc.setImcCode(acceptor, new ImcMEM(new ImcNAME(l)));
 		}
 	}
 
@@ -131,8 +133,9 @@ public class ImcCodeGen implements Visitor {
 			SemStructType type = (SemStructType) t;
 			String var = ((AbsVarName) acceptor.expr2).name;
 			int offset = type.offsetOf(var);
-			
-			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, ((ImcMEM)e1).expr, new ImcCONST(offset)));
+
+			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, ((ImcMEM) e1).expr,
+					new ImcCONST(offset)));
 		}
 
 		ImcDesc.setImcCode(acceptor, code);
@@ -350,8 +353,7 @@ public class ImcCodeGen implements Visitor {
 		if (acceptor.oper == AbsUnExpr.SUB) {
 			ImcDesc.setImcCode(acceptor, new ImcBINOP(ImcBINOP.SUB,
 					new ImcCONST(0), (ImcExpr) expr));
-		} 
-		else if (acceptor.oper == AbsUnExpr.NOT) {
+		} else if (acceptor.oper == AbsUnExpr.NOT) {
 			AbsExpr e2 = new AbsAtomConst(null, AbsAtomConst.INT, "0");
 			AbsExpr cond = new AbsBinExpr(null, AbsBinExpr.EQU, acceptor.expr,
 					e2);
@@ -362,16 +364,15 @@ public class ImcCodeGen implements Visitor {
 			not.accept(this);
 
 			ImcDesc.setImcCode(acceptor, ImcDesc.getImcCode(not));
-		}
-		else if (acceptor.oper == AbsUnExpr.MEM) {
-			if (expr instanceof ImcStmt) Report.error(acceptor.position, "Error");
+		} else if (acceptor.oper == AbsUnExpr.MEM) {
+			if (expr instanceof ImcStmt)
+				Report.error(acceptor.position, "Error");
 			ImcDesc.setImcCode(acceptor, ((ImcMEM) expr).expr);
-		}
-		else if (acceptor.oper == AbsUnExpr.VAL) {
-			if (expr instanceof ImcStmt) Report.error(acceptor.position, "Error");
+		} else if (acceptor.oper == AbsUnExpr.VAL) {
+			if (expr instanceof ImcStmt)
+				Report.error(acceptor.position, "Error");
 			ImcDesc.setImcCode(acceptor, new ImcMEM((ImcExpr) expr));
-		}
-		else
+		} else
 			ImcDesc.setImcCode(acceptor, expr);
 	}
 
@@ -445,9 +446,8 @@ public class ImcCodeGen implements Visitor {
 	}
 
 	@Override
-	public void visit(AbsImportDef acceptor) {
-		// TODO Auto-generated method stub
-		
+	public void visit(AbsImportDef importDef) {
+		importDef.imports.accept(this);
 	}
 
 }
