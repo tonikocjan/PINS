@@ -47,36 +47,20 @@ public class TypeChecker implements Visitor {
 	public void visit(AbsStructType acceptor) {
 		ArrayList<SemType> types = new ArrayList<>();
 		ArrayList<String> names = new ArrayList<>();
-//		acceptor.getDefinitions().accept(this);
-		
+
 		for (int i = 0; i < acceptor.getDefinitions().numDefs(); i++) {
 			AbsDef def = acceptor.getDefinitions().def(i);
 			if (def instanceof AbsVarDef) {
-				AbsVarDef def_ = (AbsVarDef)def;
+				AbsVarDef def_ = (AbsVarDef) def;
 				def_.type.accept(this);
 				SemType type = SymbDesc.getType(def_.type);
-				
-				types.add(type);
-				names.add(def_.name);
-			}
-			else if (def instanceof AbsTypeDef) {
-				AbsTypeDef def_ = (AbsTypeDef)def;
-				def_.type.accept(this);
-				SemType type = SymbDesc.getType(def_.type);
-				
-				types.add(type);
-				names.add(def_.name);
-			}
-			else if (def instanceof AbsFunDef) {
-				AbsFunDef def_ = (AbsFunDef)def;
-				def_.type.accept(this);
-				SemType type = SymbDesc.getType(def_.type);
-				
+
 				types.add(type);
 				names.add(def_.name);
 			}
 		}
-		SymbDesc.setType(acceptor, new SemStructType(acceptor.getName(), names, types));
+		SymbDesc.setType(acceptor, new SemStructType(acceptor.getName(), names,
+				types));
 	}
 
 	@Override
@@ -106,17 +90,20 @@ public class TypeChecker implements Visitor {
 		 * expr1[expr2]
 		 */
 		if (oper == AbsBinExpr.ARR) {
+			if (!t2.sameStructureAs(integer))
+				Report.error(acceptor.expr2.position,
+						"Expected INTEGER type for array index");
 			/**
 			 * expr1 is of type ARR(n, t)
 			 */
 			if (t1 instanceof SemArrType) {
-				SemArrType arr = (SemArrType) t1;
+				SymbDesc.setType(acceptor, ((SemArrType) t1).type);
+			} 
+			else if (t1 instanceof SemPtrType) {
 				if (t2.sameStructureAs(integer))
-					SymbDesc.setType(acceptor, arr.type);
-				else
-					Report.error(acceptor.expr2.position,
-							"Expected INTEGER type for array index");
-			} else
+					SymbDesc.setType(acceptor, ((SemPtrType) t1).type);
+			}
+			else
 				Report.error(acceptor.expr1.position,
 						"Left side of ARR expression must be of type ARRAY");
 			return;
@@ -135,34 +122,51 @@ public class TypeChecker implements Visitor {
 						+ " to type " + t1);
 			return;
 		}
-		
+
 		/**
 		 * identifier.identifier
 		 */
 		if (oper == AbsBinExpr.DOT) {
-//			if (!(acceptor.expr1 instanceof AbsVarName && 
-//					acceptor.expr2 instanceof AbsVarName))
-//				Report.error(acceptor.position,
-//						"Expression must be variable name");
-			
-			SemTypeName typ_ = (SemTypeName) t1;
-			
-			if (!(typ_.getType() instanceof SemStructType))
-				Report.error(acceptor.position, 
-						"Left expression's type must be a structure to use DOT operator");
-			
-			String name = ((AbsVarName)acceptor.expr2).name;
-			SemStructType sType = (SemStructType)typ_.getType();
-			SemType type = sType.getMembers().get(name);
-			
-			if (type == null)
+			if (!(acceptor.expr1 instanceof AbsVarName && acceptor.expr2 instanceof AbsVarName))
 				Report.error(acceptor.position,
-						"\"" + name + "\" is not defined in struct \"" + sType.getName() + "\"");
-			
+						"Expressions around DOT operator must be identifiers");
+
+			/**
+			 * Handle array.length
+			 */
+			if (t1 instanceof SemArrType) {
+				String name = ((AbsVarName) acceptor.expr2).name;
+				if (!name.equals("length"))
+					Report.error("Arrays have no attribute named \"" + name
+							+ "\"");
+
+				SymbDesc.setType(acceptor, integer);
+				return;
+			}
+
+			if (!(t1 instanceof SemTypeName))
+				Report.error(acceptor.position,
+						"Left expression's type must be a structure to use DOT operator");
+
+			SemTypeName typ_ = (SemTypeName) t1;
+
+			if (!(typ_.getType() instanceof SemStructType))
+				Report.error(acceptor.position,
+						"Left expression's type must be a structure to use DOT operator");
+
+			String name = ((AbsVarName) acceptor.expr2).name;
+			SemStructType sType = (SemStructType) typ_.getType();
+			SemType type = sType.getMembers().get(name);
+
+			if (type == null)
+				Report.error(acceptor.position, "\"" + name
+						+ "\" is not defined in struct \"" + sType.getName()
+						+ "\"");
+
 			SymbDesc.setType(acceptor, type);
 			return;
 		}
-		
+
 		/**
 		 * expr1 and expr2 are of type LOGICAL
 		 */
@@ -247,6 +251,9 @@ public class TypeChecker implements Visitor {
 		for (int arg = 0; arg < acceptor.numArgs(); arg++) {
 			acceptor.arg(arg).accept(this);
 			SemType parType = SymbDesc.getType(acceptor.arg(arg));
+			
+			if (parType instanceof SemArrType)
+				parType = new SemPtrType(((SemArrType) parType).type);
 
 			if (!type.getParType(arg).sameStructureAs(parType))
 				Report.error(acceptor.arg(arg).position,
@@ -272,7 +279,7 @@ public class TypeChecker implements Visitor {
 			acceptor.expr.accept(this);
 			SemType returnType = SymbDesc.getType(acceptor.expr);
 			SemFunType funType = (SemFunType) SymbDesc.getType(acceptor);
-			
+
 			if (!returnType.sameStructureAs(funType.resultType))
 				Report.error(acceptor.expr.position,
 						"Return type doesn't match");
@@ -311,8 +318,11 @@ public class TypeChecker implements Visitor {
 	public void visit(AbsPar acceptor) {
 		acceptor.type.accept(this);
 		SemType type = SymbDesc.getType(acceptor.type);
-		
-		SymbDesc.setType(acceptor, type);
+
+		if (type instanceof SemArrType)
+			SymbDesc.setType(acceptor, new SemPtrType(((SemArrType) type).type));
+		else
+			SymbDesc.setType(acceptor, type);
 	}
 
 	@Override
@@ -363,10 +373,13 @@ public class TypeChecker implements Visitor {
 		} else if (acceptor.oper == AbsUnExpr.MEM) {
 			SymbDesc.setType(acceptor, new SemPtrType(type));
 		} else if (acceptor.oper == AbsUnExpr.VAL) {
-			if (!(type instanceof SemPtrType))
-				Report.error(acceptor.position, 
+			if (!(type instanceof SemPtrType) && !(type instanceof SemArrType))
+				Report.error(acceptor.position,
 						"Error, operator \"*\" requires pointer operand");
-			SymbDesc.setType(acceptor, ((SemPtrType) type).type);
+			if (type instanceof SemPtrType)
+				SymbDesc.setType(acceptor, ((SemPtrType) type).type);
+			if (type instanceof SemArrType)
+				SymbDesc.setType(acceptor, ((SemArrType) type).type);
 		}
 	}
 
@@ -409,13 +422,13 @@ public class TypeChecker implements Visitor {
 		if (currentState == TraversalState.ETS_imports) {
 			String tmp = Report.fileName;
 			Report.fileName = importDef.fileName;
-			
+
 			for (TraversalState state : TraversalState.values()) {
 				currentState = state;
 				for (int def = 0; def < importDef.imports.numDefs(); def++)
 					importDef.imports.def(def).accept(this);
 			}
-			
+
 			currentState = TraversalState.ETS_imports;
 			Report.fileName = tmp;
 		}

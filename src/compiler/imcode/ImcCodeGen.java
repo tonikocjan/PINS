@@ -120,7 +120,6 @@ public class ImcCodeGen implements Visitor {
 			// TODO zrihtej da bo zaznalo velikost spremenljivke
 			// trenutno je hardcodano not 4
 			int size = 4;
-			e1 = ((ImcMEM) e1).expr;
 			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, e1, new ImcBINOP(
 					ImcBINOP.MUL, e2, new ImcCONST(size))));
 		} else if (acceptor.oper == ImcBINOP.MOD) {
@@ -130,12 +129,19 @@ public class ImcCodeGen implements Visitor {
 			code = sub;
 		} else if (acceptor.oper == AbsBinExpr.DOT) {
 			SemType t = SymbDesc.getType(acceptor.expr1).actualType();
-			SemStructType type = (SemStructType) t;
-			String var = ((AbsVarName) acceptor.expr2).name;
-			int offset = type.offsetOf(var);
+			SemStructType type = null;
+			
+			if (t instanceof SemStructType) {
+				type = (SemStructType) t;
+				String var = ((AbsVarName) acceptor.expr2).name;
+				int offset = type.offsetOf(var);
 
-			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, ((ImcMEM) e1).expr,
-					new ImcCONST(offset)));
+				code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, ((ImcMEM) e1).expr,
+						new ImcCONST(offset)));
+			}
+			else if (t instanceof SemArrType) {
+				code = new ImcCONST(((SemArrType) t).size);
+			}
 		}
 
 		ImcDesc.setImcCode(acceptor, code);
@@ -413,8 +419,12 @@ public class ImcCodeGen implements Visitor {
 			expr = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, fp, new ImcCONST(
 					loc.offset)));
 		}
-
-		ImcDesc.setImcCode(acceptor, expr);
+		
+		// remove ImcMEM if VarName is of type Array
+		if (SymbDesc.getType(acceptor) instanceof SemArrType) 
+			ImcDesc.setImcCode(acceptor, ((ImcMEM)expr).expr);
+		else
+			ImcDesc.setImcCode(acceptor, expr);
 	}
 
 	@Override
