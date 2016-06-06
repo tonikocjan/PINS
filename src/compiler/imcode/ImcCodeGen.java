@@ -8,7 +8,6 @@ import compiler.abstr.tree.AbsArrType;
 import compiler.abstr.tree.AbsAtomConst;
 import compiler.abstr.tree.AbsAtomType;
 import compiler.abstr.tree.AbsBinExpr;
-import compiler.abstr.tree.AbsDef;
 import compiler.abstr.tree.AbsDefs;
 import compiler.abstr.tree.AbsExpr;
 import compiler.abstr.tree.AbsExprs;
@@ -38,6 +37,7 @@ import compiler.frames.FrmTemp;
 import compiler.frames.FrmVarAccess;
 import compiler.seman.SymbDesc;
 import compiler.seman.type.SemArrType;
+import compiler.seman.type.SemAtomType;
 import compiler.seman.type.SemStructType;
 import compiler.seman.type.SemType;
 
@@ -115,7 +115,34 @@ public class ImcCodeGen implements Visitor {
 		if (acceptor.oper >= 0 && acceptor.oper <= 11)
 			code = new ImcBINOP(acceptor.oper, e1, e2);
 		else if (acceptor.oper == AbsBinExpr.ASSIGN) {
-			code = new ImcMOVE(e1, e2);
+			SemType p = SymbDesc.getType(acceptor.expr2).actualType();
+			// copy content of one struct into another
+			if (p instanceof SemStructType)	{
+				SemStructType t = (SemStructType) p;
+				code = new ImcSEQ();
+				
+				e1 = ((ImcMEM)e1).expr;
+				if (e2 instanceof ImcMEM)
+					e2 = ((ImcMEM)e2).expr;
+				else {
+					ImcTEMP temp = new ImcTEMP(new FrmTemp());
+					((ImcSEQ) code).stmts.add(new ImcMOVE(temp, e2));
+					e2 = temp;
+				}
+				
+				int offset = 0;				
+				for (Map.Entry<String, SemType> entry : t.getMembers().entrySet()) {
+					ImcMEM dst = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, e1, new ImcCONST(offset)));
+					ImcMEM src = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, e2, new ImcCONST(offset)));
+					
+					ImcMOVE move = new ImcMOVE(dst, src);
+					((ImcSEQ) code).stmts.add(move);
+					
+					offset += entry.getValue().actualType().size();
+				}
+			}
+			else
+				code = new ImcMOVE(e1, e2);
 		} else if (acceptor.oper == AbsBinExpr.ARR) {
 			// TODO zrihtej da bo zaznalo velikost spremenljivke
 			// trenutno je hardcodano not 4

@@ -118,8 +118,9 @@ public class Main {
 			imcode.dump(imcodegen.chunks);
 			if (execPhase.equals("imcode")) break;
 			
+			// TODO premakni v CodeGenerator??
 			// Izvajanje linearizirane vmesne kode
-			ImcCodeChunk main = null;
+			ImcCodeChunk mainFrame = null;
 			
 			int offset = 0;
 			for (ImcChunk chnk : imcodegen.chunks) {
@@ -127,7 +128,7 @@ public class Main {
 					ImcCodeChunk fn = (ImcCodeChunk) chnk;
 					fn.lincode = fn.imcode.linear();
 					if (fn.frame.label.name().equals("_main")) {
-						main = fn;
+						mainFrame = fn;
 						
 						if (mainFunction.numPars() > 1 || !mainFunction.par(0).name.equals("i"))
 							Report.error(mainFunction.position, "Undefined reference to _main(i:integer)");
@@ -145,7 +146,7 @@ public class Main {
 					offset += data.size;
 				}
 			}
-			if (main == null)
+			if (mainFrame == null)
 				Report.error("Undefined reference to _main(i:integer)");
 
 			System.out.printf(":-) Done.\n");
@@ -155,8 +156,8 @@ public class Main {
 			imcode.dump(imcodegen.chunks);
 			
 			Interpreter.stM(Interpreter.getFP() + 4, 0);
-			ImcSEQ linearMainCode = main.imcode.linear();
-			new Interpreter(main.frame, linearMainCode);
+			ImcSEQ linearMainCode = mainFrame.imcode.linear();
+			new Interpreter(mainFrame.frame, linearMainCode);
 			
 			if (execPhase.equals("interpret")) break;
 			

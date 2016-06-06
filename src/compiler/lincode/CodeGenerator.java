@@ -23,4 +23,8 @@ public class CodeGenerator {
 		dict.put(label, code);
 	}
 	
+	public static FrmFrame generateLinearCode() {
+		return null;
+	}
+	
 }

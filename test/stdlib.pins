@@ -24,10 +24,9 @@ fun fib(x : integer) : integer = (
 	{where var rez : integer}
 );
 
-var tab : arr[10] integer;
-fun bubble(x : integer) : integer = (
-	{for i = 0, x, 1 : 
-		{for j = 0, x, 1: 
+fun bubble(tab:arr[10] integer) : logical = (
+	{for i = 0, 10, 1 : 
+		{for j = 0, 10, 1: 
 			{if tab[j] > tab[i] then 
 				(
 				{tmp = tab[j]},
@@ -38,8 +37,7 @@ fun bubble(x : integer) : integer = (
 			}
 		}
 	},
-	{ for i = 0, x, 1: putInt(tab[i]) },
-	1
+	true
 ) { where var i : integer; var j : integer };
 
 # binary search
