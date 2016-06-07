@@ -1,6 +1,10 @@
-import test1.bubble;
+import stdlib.bubble, gcd;
+import vector;
 
 var tab:arr[10] integer;
+var vec : vector;
+var vec2 : vector;
+
 fun main(i:integer) : integer = (
 	{tab[0] = 5},
 	{tab[1] = -33},
@@ -14,5 +18,25 @@ fun main(i:integer) : integer = (
 	{tab[9] = 12},
 	bubble(tab),
 	{ for i = 0, tab.length, 1: putInt(tab[i]) },
+	putString(''),
+	putInt(gcd(100, 25)),
+	
+	tab instanceof integer 
+	
+	# structs
+	{ vec2.x = 20 },
+	{ vec2.y = 22 },
+	{ vec2.z = 24 },
+	{ vec = vec2 },
+	
+	putInt(vec.x),
+	putInt(vec.y),
+	putInt(vec.z),
+
+	{ vec = create(9, 5, 10) },
+	
+	putInt(vec.x),
+	putInt(vec.y),
+	putInt(vec.z),
 	0
 )

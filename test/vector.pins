@@ -1,0 +1,14 @@
+typ int : integer;
+
+typ vector : struct {
+	var x : int;
+	var y : int;
+	var z : int
+};
+
+fun create(x:int, y:int, z:int) : vector = (
+	{ vec.x = x },
+	{ vec.y = y },
+	{ vec.z = z },
+	vec
+) { where var vec : vector }
