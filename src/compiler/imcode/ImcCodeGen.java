@@ -37,7 +37,6 @@ import compiler.frames.FrmTemp;
 import compiler.frames.FrmVarAccess;
 import compiler.seman.SymbDesc;
 import compiler.seman.type.SemArrType;
-import compiler.seman.type.SemAtomType;
 import compiler.seman.type.SemStructType;
 import compiler.seman.type.SemType;
 
@@ -144,7 +143,8 @@ public class ImcCodeGen implements Visitor {
 			else
 				code = new ImcMOVE(e1, e2);
 		} else if (acceptor.oper == AbsBinExpr.ARR) {
-			// TODO zrihtej da bo zaznalo velikost spremenljivke
+			// TODO 
+			// zrihtej da bo zaznalo velikost spremenljivke
 			// trenutno je hardcodano not 4
 			int size = 4;
 			code = new ImcMEM(new ImcBINOP(ImcBINOP.ADD, e1, new ImcBINOP(
@@ -232,8 +232,9 @@ public class ImcCodeGen implements Visitor {
 		ImcExpr hi = (ImcExpr) ImcDesc.getImcCode(acceptor.hi);
 		ImcExpr lo = (ImcExpr) ImcDesc.getImcCode(acceptor.lo);
 		ImcExpr count = (ImcExpr) ImcDesc.getImcCode(acceptor.count);
-		FrmLabel l1 = FrmLabel.newLabel(), l2 = FrmLabel.newLabel(), l3 = FrmLabel
-				.newLabel();
+		FrmLabel l1 = FrmLabel.newLabel(), 
+				 l2 = FrmLabel.newLabel(), 
+				 l3 = FrmLabel.newLabel();
 
 		ImcSEQ statements = new ImcSEQ();
 		statements.stmts.add(new ImcMOVE(count, lo));
@@ -288,20 +289,34 @@ public class ImcCodeGen implements Visitor {
 
 		ImcExpr rv = new ImcTEMP(new FrmTemp());
 		ImcStmt fnCode = null;
+		ImcSEQ seq = new ImcSEQ();
 
 		if (code instanceof ImcESEQ) {
 			fnCode = ((ImcESEQ) code).stmt;
 			code = ((ImcESEQ) code).expr;
-		}
-
-		ImcSEQ seq = new ImcSEQ();
-		// add function code
-		if (fnCode != null)
+			// add function code
 			seq.stmts.add(fnCode);
-		// save result into temp
-		seq.stmts.add(new ImcMOVE(rv, (ImcExpr) code));
-		// move result from temp into RV
-		seq.stmts.add(new ImcMOVE(new ImcTEMP(currentFrame.RV), rv));
+		}
+		else if (code instanceof ImcSEQ) {
+			ImcCode tmp = ((ImcSEQ) code).stmts.getLast();
+			((ImcSEQ) code).stmts.removeLast();
+			fnCode = (ImcSEQ) code;
+			code = tmp;
+		}
+		
+		if (code instanceof ImcMOVE){
+			seq.stmts.add((ImcStmt) code);
+			// save result into temporary
+			seq.stmts.add(new ImcMOVE(rv, ((ImcMOVE) code).dst));
+			// move result from temp into RV
+			seq.stmts.add(new ImcMOVE(new ImcTEMP(currentFrame.RV), rv));
+		}
+		else {
+			// save result into temporary
+			seq.stmts.add(new ImcMOVE(rv, (ImcExpr) code));
+			// move result from temp into RV
+			seq.stmts.add(new ImcMOVE(new ImcTEMP(currentFrame.RV), rv));
+		}
 
 		chunks.add(new ImcCodeChunk(frame, seq));
 		currentFrame = tmpFr;
@@ -347,8 +362,9 @@ public class ImcCodeGen implements Visitor {
 		ImcStmt expr2 = (e2 instanceof ImcStmt) ? (ImcStmt) e2 : new ImcEXP(
 				(ImcExpr) e2);
 
-		FrmLabel l1 = FrmLabel.newLabel(), l2 = FrmLabel.newLabel(), l3 = FrmLabel
-				.newLabel();
+		FrmLabel l1 = FrmLabel.newLabel(), 
+				 l2 = FrmLabel.newLabel(), 
+				 l3 = FrmLabel.newLabel();
 
 		ImcSEQ statements = new ImcSEQ();
 		statements.stmts.add(new ImcCJUMP(cond, l1, l2));
@@ -467,8 +483,9 @@ public class ImcCodeGen implements Visitor {
 		acceptor.cond.accept(this);
 		acceptor.body.accept(this);
 
-		FrmLabel l1 = FrmLabel.newLabel(), l2 = FrmLabel.newLabel(), l3 = FrmLabel
-				.newLabel();
+		FrmLabel l1 = FrmLabel.newLabel(), 
+				 l2 = FrmLabel.newLabel(), 
+				 l3 = FrmLabel.newLabel();
 
 		ImcSEQ statements = new ImcSEQ();
 		statements.stmts.add(new ImcLABEL(l1));

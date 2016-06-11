@@ -33,11 +33,14 @@ public class Interpreter {
 	
 	public static int getFP() { return fp; }
 	
+	/** Velikost sklada */
+	public  static int STACK_SIZE = 10000;
+	
 	/** Kazalec na vrh klicnega zapisa. */
-	private static int fp = 1000;
+	private static int fp = STACK_SIZE;
 
 	/** Kazalec na dno klicnega zapisa. */
-	private static int sp = 1000;
+	private static int sp = STACK_SIZE;
 	
 	/*--- dinamicni del navideznega stroja ---*/
 	
@@ -66,6 +69,11 @@ public class Interpreter {
 		fp = sp;
 		stT(frame.FP, fp);
 		sp = sp - frame.size();
+		
+		if (sp < 0) {
+			Report.error("Error, stack overflow");
+		}
+		
 		if (debug) {
 			System.out.println("[FP=" + fp + "]");
 			System.out.println("[SP=" + sp + "]");
@@ -191,7 +199,6 @@ public class Interpreter {
 		}
 		
 		if (instruction instanceof ImcCONST) {
-			// TODO stringi pa logicali
 			ImcCONST instr = (ImcCONST) instruction;
 			return new Integer(instr.value);
 		}
@@ -231,9 +238,7 @@ public class Interpreter {
 			if (instr.label.name().equals("FP")) return fp;
 			if (instr.label.name().equals("SP")) return sp;
 			
-			int address = locations.get(instr.label);
-//			return ldM(address);
-			return address;
+			return locations.get(instr.label);
 		}
 		
 		if (instruction instanceof ImcTEMP) {
@@ -241,25 +246,6 @@ public class Interpreter {
 			return ldT(instr.temp);
 		}
 	
-//		if (instruction instanceof ImUNOP) {
-//			ImUNOP instr = (ImUNOP) instruction;
-//			Object subValue = execute(instr.subExpr);
-//			switch (instr.oper) {
-//			case ImUNOP.ADDi:
-//				return +(((Integer) subValue).intValue());
-//			case ImUNOP.SUBi:
-//				return -(((Integer) subValue).intValue());
-//			case ImUNOP.ADDr:
-//				return +(((Float) subValue).floatValue());
-//			case ImUNOP.SUBr:
-//				return +(((Float) subValue).floatValue());
-//			case ImUNOP.NOT:
-//				return (((Integer) subValue).intValue() == 0 ? 1 : 0);
-//			}
-//			Report.error("Internal error.", 1);
-//			return null;
-//		}
-		
 		return null;
 	}
 	

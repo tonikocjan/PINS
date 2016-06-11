@@ -63,6 +63,16 @@ public class Main {
 					Interpreter.debug = debug.equals("true"); 
 					continue;
 				}
+				if (args[argc].startsWith("--stack_size=")) {
+					String size = args[argc].substring("--stack_size=".length());
+					try {
+						Interpreter.STACK_SIZE = Integer.parseInt(size);
+					}
+					catch(Exception e) {
+						Report.warning("Invalid stack_size parameter");
+					}
+					continue;
+				}
 				// Neznano stikalo.
 				Report.warning("Unrecognized switch in the command line.");
 			} else {
@@ -117,7 +127,6 @@ public class Main {
 			source.accept(imcodegen);
 			imcode.dump(imcodegen.chunks);
 			if (execPhase.equals("imcode")) break;
-			
 			// TODO premakni v CodeGenerator??
 			// Izvajanje linearizirane vmesne kode
 			ImcCodeChunk mainFrame = null;
@@ -156,8 +165,7 @@ public class Main {
 			imcode.dump(imcodegen.chunks);
 			
 			Interpreter.stM(Interpreter.getFP() + 4, 0);
-			ImcSEQ linearMainCode = mainFrame.imcode.linear();
-			new Interpreter(mainFrame.frame, linearMainCode);
+			new Interpreter(mainFrame.frame, mainFrame.imcode.linear());
 			
 			if (execPhase.equals("interpret")) break;
 			
