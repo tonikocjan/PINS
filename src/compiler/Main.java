@@ -114,6 +114,10 @@ public class Main {
 			source.accept(nc);
 			source.accept(new TypeChecker());
 			AbsFunDef mainFunction = nc.getMain();
+			if (mainFunction == null || 
+				mainFunction.numPars() > 1 || 
+				!mainFunction.par(0).name.equals("i"))
+				Report.error(mainFunction.position, "Undefined reference to _main(i:integer)");
 			semAn.dump(source);
 			if (execPhase.equals("seman")) break;
 			// Klicni zapisi.
@@ -127,43 +131,15 @@ public class Main {
 			source.accept(imcodegen);
 			imcode.dump(imcodegen.chunks);
 			if (execPhase.equals("imcode")) break;
-			// TODO premakni v CodeGenerator??
-			// Izvajanje linearizirane vmesne kode
-			ImcCodeChunk mainFrame = null;
-			
-			int offset = 0;
-			for (ImcChunk chnk : imcodegen.chunks) {
-				if (chnk instanceof ImcCodeChunk) {
-					ImcCodeChunk fn = (ImcCodeChunk) chnk;
-					fn.lincode = fn.imcode.linear();
-					if (fn.frame.label.name().equals("_main")) {
-						mainFrame = fn;
-						
-						if (mainFunction.numPars() > 1 || !mainFunction.par(0).name.equals("i"))
-							Report.error(mainFunction.position, "Undefined reference to _main(i:integer)");
-					}
-					CodeGenerator.insertCode(fn.frame.label, fn);
-				}
-				else {
-					ImcDataChunk data = (ImcDataChunk) chnk;
-					Interpreter.locations.put(data.label, offset);
-					if (data.data != null)
-						Interpreter.stM(offset, data.data);
-					else
-						Interpreter.stM(offset, 0);
-						
-					offset += data.size;
-				}
-			}
-			if (mainFrame == null)
-				Report.error("Undefined reference to _main(i:integer)");
+			// Linearizacija vmesne kode
+			ImcCodeChunk mainFrame = CodeGenerator.linearize(imcodegen.chunks);
+			imcode = new ImCode(dumpPhases.contains("interpret"));
+			imcode.dump(imcodegen.chunks);
 
 			System.out.printf(":-) Done.\n");
 			System.out.printf("----- Executing file %s -----\n", sourceFileName);
 			
-			imcode = new ImCode(dumpPhases.contains("interpret"));
-			imcode.dump(imcodegen.chunks);
-			
+			// Izvajanje linearizirane vmesne kode
 			Interpreter.stM(Interpreter.getFP() + 4, 0);
 			new Interpreter(mainFrame.frame, mainFrame.imcode.linear());
 			
