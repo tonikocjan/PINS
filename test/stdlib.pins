@@ -17,16 +17,17 @@ fun fib2(x : integer) : integer = (
 
 # recursicve fibonacci
 fun fib(x : integer) : integer = (
-	({ if x < 2 then 
-		{rez = 1} 
+	{ if x < 2 then
+		({rez = 1})
 	else 
-		{rez = fib(x - 1) + fib(x - 2)}}, rez) 
-	{where var rez : integer}
-);
+		({rez = fib(x - 1) + fib(x - 2)})
+	},
+	rez
+) {where var rez : integer};
 
-fun bubble(tab:arr[10] integer) : logical = (
-	{for i = 0, 10, 1 : 
-		{for j = 0, 10, 1: 
+fun bubble(tab:arr[13] integer) : integer = (
+	{for i = 0, 13, 1 :
+		{for j = 0, 13, 1:
 			{if tab[j] > tab[i] then 
 				(
 				{tmp = tab[j]},
@@ -37,11 +38,11 @@ fun bubble(tab:arr[10] integer) : logical = (
 			}
 		}
 	},
-	true
+	1
 ) { where var i : integer; var j : integer };
 
 # binary search
-fun binSearch(begin : integer, end:integer, x : integer) : logical = (
+fun binSearch(tab: arr[10] integer, begin : integer, end:integer, x : integer) : logical = (
 	{ if end < begin then { result = false } 
 	else
 		({ pivot = begin + (end - begin) / 2 },
@@ -51,9 +52,9 @@ fun binSearch(begin : integer, end:integer, x : integer) : logical = (
 		else 
 			{
 			if tab[pivot] < x then
-				{result = binSearch(pivot + 1, end, x)}
+				{result = binSearch(tab, pivot + 1, end, x)}
 			else
-				{result = binSearch(begin, pivot - 1, x)}
+				{result = binSearch(tab, begin, pivot - 1, x)}
 			}
 		})
 	},
@@ -81,4 +82,54 @@ fun gcd(x:integer, y:integer) : integer = (
 	{ res = x },
 	{ if y > 0 then {res = gcd(y, x % y) }},
 	res
-) { where var res : integer  }
+) { where var res : integer  };
+
+fun partition(tab: arr[13] integer, low: integer, high: integer) : integer = (
+    {pivot = tab[low]},
+    {i = low - 1},
+    {j = high + 1},
+    {loop = true},
+    {while loop == true:
+    (
+        {p = true},
+        {while p == true:
+        (
+            {j = j - 1},
+            {if tab[j] <= pivot then
+                {p = false}
+            }
+        )
+        },
+        {p = true},
+        {while p == true:
+        (
+            {i = i + 1},
+            {if tab[i] >= pivot then
+                {p = false}
+            }
+        )
+        },
+        {if i < j then
+            (
+                {tmp = tab[j]},
+                {tab[j] = tab[i]},
+                {tab[i] = tmp},0
+            )
+            { where var tmp : integer}
+        else ({loop = false})
+        }
+    )
+    },
+	j
+) { where var pivot: integer; var i: integer; var j: integer; var p: logical; var loop: logical };
+
+fun quickSort(tab: arr[13] integer, low: integer, high: integer) : integer = (
+    {if low < high then
+    (
+        {p = partition(tab, low, high)},
+        quickSort(tab, low, p),
+        quickSort(tab, p + 1, high)
+    )
+    },
+    0
+) { where var p: integer }

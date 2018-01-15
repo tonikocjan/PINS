@@ -1,0 +1,29 @@
+import stdlib.bubble;
+import stdlib.partition;
+import stdlib.quickSort;
+
+var tab: arr[13] integer;
+var count: integer;
+
+fun main(i:integer) : integer = (
+	{while count < 100000:
+	(
+        {tab[0] = 8},
+        {tab[1] = 0},
+        {tab[2] = 3},
+        {tab[3] = 9},
+        {tab[4] = 2},
+        {tab[5] = 14},
+        {tab[6] = 10},
+        {tab[7] = 27},
+        {tab[8] = 1},
+        {tab[9] = 5},
+        {tab[10] = 8},
+        {tab[11] = -1},
+        {tab[12] = 26},
+	    quickSort(tab, 0, tab.length - 1),
+	    {count = count + 1}
+	)
+	},
+	0
+)
